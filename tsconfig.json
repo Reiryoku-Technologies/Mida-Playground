@@ -1,0 +1,35 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "declaration": true,
+        "incremental": true,
+        "inlineSources": true,
+        "module": "commonjs",
+        "outDir": "build",
+        "paths": {
+            "!/*": [
+                "./*"
+            ],
+            "#*": [
+                "./src/core/*"
+            ]
+        },
+        "removeComments": true,
+        "sourceMap": true,
+        "strict": true,
+        "target": "es6",
+        "plugins": [
+            {
+                "transform": "typescript-transform-paths"
+            },
+            {
+                "transform": "typescript-transform-paths",
+                "afterDeclarations": true
+            }
+        ]
+    },
+    "exclude": [
+        "build",
+        "node_modules"
+    ]
+}

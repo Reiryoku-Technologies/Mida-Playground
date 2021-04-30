@@ -1,0 +1,9 @@
+{
+    "name": "Mida",
+    "includeVersion": true,
+    "excludePrivate": true,
+    "entryPoints": [
+        "./src/core"
+    ],
+    "out": "docs/typedoc"
+}
