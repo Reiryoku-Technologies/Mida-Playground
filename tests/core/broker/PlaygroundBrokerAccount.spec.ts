@@ -6,9 +6,9 @@ import {
 import { PlaygroundBroker } from "#broker/PlaygroundBroker";
 import { PlaygroundBrokerAccount } from "#broker/PlaygroundBrokerAccount";
 
-const broker: PlaygroundBroker = new PlaygroundBroker();
-
 describe("PlaygroundBrokerAccount", () => {
+    const broker: PlaygroundBroker = new PlaygroundBroker();
+
     describe(".localDate", () => {
         it("is set correctly", async () => {
             const actualDate: Date = new Date();
@@ -99,15 +99,15 @@ describe("PlaygroundBrokerAccount", () => {
                     quotation: new MidaSymbolQuotation({
                         symbol,
                         date: new Date(),
-                        bid: 0,
-                        ask: 0,
+                        bid: 1,
+                        ask: 2,
                     }),
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
                         symbol,
                         date: new Date((new Date()).valueOf() + 1000),
-                        bid: 1,
+                        bid: 2,
                         ask: 3,
                     }),
                 }),
@@ -115,7 +115,7 @@ describe("PlaygroundBrokerAccount", () => {
                     quotation: new MidaSymbolQuotation({
                         symbol,
                         date: new Date((new Date()).valueOf() + 2000),
-                        bid: 2,
+                        bid: 3,
                         ask: 4,
                     }),
                 }),
@@ -140,32 +140,32 @@ describe("PlaygroundBrokerAccount", () => {
                     quotation: new MidaSymbolQuotation({
                         symbol,
                         date: new Date(),
-                        bid: 0,
-                        ask: 0,
+                        bid: 1,
+                        ask: 2,
                     }),
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
                         symbol,
                         date: new Date((new Date()).valueOf() + 1000),
-                        bid: 1,
-                        ask: 3,
-                    }),
-                }),
-                new MidaSymbolTick({
-                    quotation: new MidaSymbolQuotation({
-                        symbol,
-                        date: new Date((new Date()).valueOf() - 2000),
-                        bid: 2,
+                        bid: 3,
                         ask: 4,
                     }),
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
                         symbol,
+                        date: new Date((new Date()).valueOf() - 2000),
+                        bid: 5,
+                        ask: 6,
+                    }),
+                }),
+                new MidaSymbolTick({
+                    quotation: new MidaSymbolQuotation({
+                        symbol,
                         date: new Date((new Date()).valueOf() + 3000),
-                        bid: 1,
-                        ask: 3,
+                        bid: 7,
+                        ask: 8,
                     }),
                 }),
             ];
@@ -210,24 +210,24 @@ describe("PlaygroundBrokerAccount", () => {
                     quotation: new MidaSymbolQuotation({
                         symbol,
                         date: actualDate,
-                        bid: 0,
-                        ask: 0,
+                        bid: 1,
+                        ask: 2,
                     }),
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
                         symbol,
                         date: new Date(actualDate.valueOf() + 1000),
-                        bid: 1,
-                        ask: 3,
+                        bid: 3,
+                        ask: 4,
                     }),
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
                         symbol,
                         date: new Date(actualDate.valueOf() + 2000),
-                        bid: 2,
-                        ask: 4,
+                        bid: 5,
+                        ask: 6,
                     }),
                 }),
             ];
@@ -278,24 +278,24 @@ describe("PlaygroundBrokerAccount", () => {
                     quotation: new MidaSymbolQuotation({
                         symbol,
                         date: actualDate,
-                        bid: 0,
-                        ask: 0,
+                        bid: 1,
+                        ask: 2,
                     }),
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
                         symbol,
                         date: new Date(actualDate.valueOf() + 1000),
-                        bid: 1,
-                        ask: 3,
+                        bid: 3,
+                        ask: 4,
                     }),
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
                         symbol,
                         date: new Date(actualDate.valueOf() + 2000),
-                        bid: 2,
-                        ask: 4,
+                        bid: 5,
+                        ask: 6,
                     }),
                 }),
             ];
