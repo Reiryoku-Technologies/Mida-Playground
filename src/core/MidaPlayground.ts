@@ -13,3 +13,7 @@ export const plugin: MidaPlugin = new MidaPlugin({
         actions.addBroker(new PlaygroundBroker());
     },
 });
+
+export { PlaygroundBroker } from "#broker/PlaygroundBroker";
+export { PlaygroundBrokerAccount } from "#broker/PlaygroundBrokerAccount";
+export { PlaygroundBrokerAccountParameters } from "#broker/PlaygroundBrokerAccountParameters";
