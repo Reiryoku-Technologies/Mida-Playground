@@ -42,7 +42,7 @@ export class PlaygroundBrokerAccount extends MidaBrokerAccount {
     }: PlaygroundBrokerAccountParameters) {
         super({ id, ownerName, type: MidaBrokerAccountType.DEMO, currency, broker, });
 
-        this._localDate = new Date(localDate);
+        this._localDate = new Date(localDate || 0);
         this._localTicks = {};
         this._lastTicks = {};
         this._balance = balance;
