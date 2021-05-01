@@ -1,1 +1,1 @@
-export * from "!/src/core/MidaPluginTemplate";
+export * from "!/src/core/MidaPlayground";
