@@ -4,9 +4,9 @@ export type PlaygroundBrokerAccountParameters = {
     id: string;
     ownerName: string;
     broker: MidaBroker;
-    localDate: Date;
-    currency: string;
-    balance: number;
+    localDate?: Date;
+    currency?: string;
+    balance?: number;
     negativeBalanceProtection?: boolean;
     fixedOrderCommission?: number;
     marginCallLevel?: number;
