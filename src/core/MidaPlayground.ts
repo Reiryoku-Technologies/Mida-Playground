@@ -1,4 +1,8 @@
-import { MidaPlugin } from "@reiryoku/mida";
+import {
+    MidaPlugin,
+    MidaBroker,
+} from "@reiryoku/mida";
+import { PlaygroundBroker } from "#broker/PlaygroundBroker";
 
 export const plugin: MidaPlugin = new MidaPlugin({
     name: "MidaPlayground",
@@ -6,6 +10,6 @@ export const plugin: MidaPlugin = new MidaPlugin({
     version: "1.0.0",
 
     install (): void {
-        // Silence is golden.
+        MidaBroker.add(new PlaygroundBroker());
     },
 });
