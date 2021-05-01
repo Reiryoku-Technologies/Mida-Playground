@@ -276,6 +276,79 @@ export class PlaygroundBrokerAccount extends MidaBrokerAccount {
         });
     }
 
+
+    public async getOrderStopLoss (ticket: number): Promise<number | undefined> {
+        const order: MidaBrokerOrder | undefined = this._orders.get(ticket);
+
+        if (!order) {
+            throw new Error();
+        }
+
+        return order.stopLoss;
+    }
+
+    public async setOrderStopLoss (ticket: number, stopLoss: number): Promise<void> {
+        const order: MidaBrokerOrder | undefined = this._orders.get(ticket);
+
+        if (!order) {
+            throw new Error();
+        }
+
+        this.notifyListeners("order-directives", {
+            ticket: order.ticket,
+            stopLoss,
+        });
+    }
+
+    public async clearOrderStopLoss (ticket: number): Promise<void> {
+        const order: MidaBrokerOrder | undefined = this._orders.get(ticket);
+
+        if (!order) {
+            throw new Error();
+        }
+
+        this.notifyListeners("order-directives", {
+            ticket: order.ticket,
+            stopLoss: undefined,
+        });
+    }
+
+    public async getOrderTakeProfit (ticket: number): Promise<number | undefined> {
+        const order: MidaBrokerOrder | undefined = this._orders.get(ticket);
+
+        if (!order) {
+            throw new Error();
+        }
+
+        return order.takeProfit;
+    }
+
+    public async setOrderTakeProfit (ticket: number, takeProfit: number): Promise<void> {
+        const order: MidaBrokerOrder | undefined = this._orders.get(ticket);
+
+        if (!order) {
+            throw new Error();
+        }
+
+        this.notifyListeners("order-directives", {
+            ticket: order.ticket,
+            takeProfit,
+        });
+    }
+
+    public async clearOrderTakeProfit (ticket: number): Promise<void> {
+        const order: MidaBrokerOrder | undefined = this._orders.get(ticket);
+
+        if (!order) {
+            throw new Error();
+        }
+
+        this.notifyListeners("order-directives", {
+            ticket: order.ticket,
+            takeProfit: undefined,
+        });
+    }
+
     public async getSymbols (): Promise<MidaSymbol[]> {
         return [];
     }
