@@ -1,7 +1,10 @@
 import {
     MidaEvent,
-    MidaSymbolTick,
+    MidaBrokerOrder,
+    MidaBrokerOrderStatusType,
+    MidaBrokerOrderType,
     MidaSymbolQuotation,
+    MidaSymbolTick,
 } from "@reiryoku/mida";
 import { PlaygroundBroker } from "#broker/PlaygroundBroker";
 import { PlaygroundBrokerAccount } from "#broker/PlaygroundBrokerAccount";
@@ -91,14 +94,163 @@ describe("PlaygroundBrokerAccount", () => {
     });
 
     describe(".placeOrder", () => {
-        it("opens market order", async () => {
-            expect(true).toBe(true);
+        it("opens sell market order", async () => {
+            const account: PlaygroundBrokerAccount = await broker.login();
+            const symbol: string = "TEST";
+            const actualDate: Date = new Date();
+            const ticks: MidaSymbolTick[] = [
+                new MidaSymbolTick({
+                    quotation: new MidaSymbolQuotation({
+                        symbol,
+                        date: actualDate,
+                        bid: 1,
+                        ask: 2,
+                    }),
+                }),
+                new MidaSymbolTick({
+                    quotation: new MidaSymbolQuotation({
+                        symbol,
+                        date: new Date(actualDate.valueOf() + 1000),
+                        bid: 3,
+                        ask: 4,
+                    }),
+                }),
+                new MidaSymbolTick({
+                    quotation: new MidaSymbolQuotation({
+                        symbol,
+                        date: new Date(actualDate.valueOf() + 2000),
+                        bid: 5,
+                        ask: 6,
+                    }),
+                }),
+            ];
+
+            await account.loadTicks(ticks);
+
+            account.localDate = new Date(actualDate.valueOf() - 500);
+
+            await account.elapseTime(1);
+
+            const order: MidaBrokerOrder = await account.placeOrder({
+                symbol,
+                type: MidaBrokerOrderType.SELL,
+                lots: 1,
+            });
+
+            expect(order.status).toBe(MidaBrokerOrderStatusType.OPEN);
+
+            await account.elapseTime(2);
+
+            expect(order.openPrice).toBe(1);
         });
 
-        it("opens pending order", async () => {
-            expect(true).toBe(true);
+        it("opens sell limit order", async () => {
+            const account: PlaygroundBrokerAccount = await broker.login();
+            const symbol: string = "TEST";
+            const actualDate: Date = new Date();
+            const ticks: MidaSymbolTick[] = [
+                new MidaSymbolTick({
+                    quotation: new MidaSymbolQuotation({
+                        symbol,
+                        date: actualDate,
+                        bid: 1,
+                        ask: 2,
+                    }),
+                }),
+                new MidaSymbolTick({
+                    quotation: new MidaSymbolQuotation({
+                        symbol,
+                        date: new Date(actualDate.valueOf() + 1000),
+                        bid: 3,
+                        ask: 4,
+                    }),
+                }),
+                new MidaSymbolTick({
+                    quotation: new MidaSymbolQuotation({
+                        symbol,
+                        date: new Date(actualDate.valueOf() + 2000),
+                        bid: 5,
+                        ask: 6,
+                    }),
+                }),
+            ];
+
+            await account.loadTicks(ticks);
+
+            account.localDate = new Date(actualDate.valueOf() - 500);
+
+            await account.elapseTime(1);
+
+            const order: MidaBrokerOrder = await account.placeOrder({
+                symbol,
+                type: MidaBrokerOrderType.SELL,
+                lots: 1,
+                limit: 3,
+            });
+
+            expect(order.status).toBe(MidaBrokerOrderStatusType.PENDING);
+            expect(order.openPrice).toBe(undefined);
+
+            await account.elapseTime(2);
+
+            expect(order.status).toBe(MidaBrokerOrderStatusType.OPEN);
+            expect(order.openPrice).toBe(3);
         });
 
+        it("opens sell stop order", async () => {
+            const account: PlaygroundBrokerAccount = await broker.login();
+            const symbol: string = "TEST";
+            const actualDate: Date = new Date();
+            const ticks: MidaSymbolTick[] = [
+                new MidaSymbolTick({
+                    quotation: new MidaSymbolQuotation({
+                        symbol,
+                        date: actualDate,
+                        bid: 5,
+                        ask: 6,
+                    }),
+                }),
+                new MidaSymbolTick({
+                    quotation: new MidaSymbolQuotation({
+                        symbol,
+                        date: new Date(actualDate.valueOf() + 1000),
+                        bid: 3,
+                        ask: 4,
+                    }),
+                }),
+                new MidaSymbolTick({
+                    quotation: new MidaSymbolQuotation({
+                        symbol,
+                        date: new Date(actualDate.valueOf() + 2000),
+                        bid: 1,
+                        ask: 2,
+                    }),
+                }),
+            ];
+
+            await account.loadTicks(ticks);
+
+            account.localDate = new Date(actualDate.valueOf() - 500);
+
+            await account.elapseTime(1);
+
+            const order: MidaBrokerOrder = await account.placeOrder({
+                symbol,
+                type: MidaBrokerOrderType.SELL,
+                lots: 1,
+                stop: 3,
+            });
+
+            expect(order.status).toBe(MidaBrokerOrderStatusType.PENDING);
+            expect(order.openPrice).toBe(undefined);
+
+            await account.elapseTime(2);
+
+            expect(order.status).toBe(MidaBrokerOrderStatusType.OPEN);
+            expect(order.openPrice).toBe(3);
+        });
+
+        /*
         it("order is closed when stop loss is reached", async () => {
             expect(true).toBe(true);
         });
@@ -114,6 +266,7 @@ describe("PlaygroundBrokerAccount", () => {
         it("pending order is opened when stop is reached", async () => {
             expect(true).toBe(true);
         });
+        */
     });
 
     describe(".loadTicks", () => {
