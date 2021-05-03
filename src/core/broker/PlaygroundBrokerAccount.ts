@@ -27,6 +27,12 @@ export class PlaygroundBrokerAccount extends MidaBrokerAccount {
     private readonly _lastTicks: {
         [symbol: string]: MidaSymbolTick;
     };
+    private readonly _localPeriods: {
+        [symbol: string]: MidaSymbolPeriod[];
+    };
+    private readonly _lastPeriods: {
+        [symbol: string]: MidaSymbolPeriod;
+    };
 
     public constructor ({
         id,
@@ -45,6 +51,8 @@ export class PlaygroundBrokerAccount extends MidaBrokerAccount {
         this._localDate = new Date(localDate || 0);
         this._localTicks = {};
         this._lastTicks = {};
+        this._localPeriods = {};
+        this._lastPeriods = {};
         this._balance = balance;
         this._ticketsCounter = 0;
         this._orders = new Map();

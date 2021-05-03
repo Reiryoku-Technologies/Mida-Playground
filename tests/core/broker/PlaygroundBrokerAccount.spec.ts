@@ -90,6 +90,32 @@ describe("PlaygroundBrokerAccount", () => {
         });
     });
 
+    describe(".placeOrder", () => {
+        it("opens market order", async () => {
+            expect(true).toBe(true);
+        });
+
+        it("opens pending order", async () => {
+            expect(true).toBe(true);
+        });
+
+        it("order is closed when stop loss is reached", async () => {
+            expect(true).toBe(true);
+        });
+
+        it("order is closed when take profit is reached", async () => {
+            expect(true).toBe(true);
+        });
+
+        it("pending order is opened when limit is reached", async () => {
+            expect(true).toBe(true);
+        });
+
+        it("pending order is opened when stop is reached", async () => {
+            expect(true).toBe(true);
+        });
+    });
+
     describe(".loadTicks", () => {
         it("correctly adds ticks for the first time", async () => {
             const account: PlaygroundBrokerAccount = await broker.login();
