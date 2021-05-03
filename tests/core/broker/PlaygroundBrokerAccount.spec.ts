@@ -137,7 +137,9 @@ describe("PlaygroundBrokerAccount", () => {
                 lots: 1,
             });
 
+            expect(order.type).toBe(MidaBrokerOrderType.SELL);
             expect(order.status).toBe(MidaBrokerOrderStatusType.OPEN);
+            expect(order.openPrice).toBe(1);
 
             await account.elapseTime(2);
 
@@ -188,6 +190,7 @@ describe("PlaygroundBrokerAccount", () => {
                 limit: 3,
             });
 
+            expect(order.type).toBe(MidaBrokerOrderType.SELL);
             expect(order.status).toBe(MidaBrokerOrderStatusType.PENDING);
             expect(order.openPrice).toBe(undefined);
 
@@ -241,6 +244,7 @@ describe("PlaygroundBrokerAccount", () => {
                 stop: 3,
             });
 
+            expect(order.type).toBe(MidaBrokerOrderType.SELL);
             expect(order.status).toBe(MidaBrokerOrderStatusType.PENDING);
             expect(order.openPrice).toBe(undefined);
 
