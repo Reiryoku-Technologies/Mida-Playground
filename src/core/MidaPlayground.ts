@@ -2,7 +2,7 @@ import {
     MidaPlugin,
     MidaPluginActions,
 } from "@reiryoku/mida";
-import { PlaygroundBroker } from "#broker/PlaygroundBroker";
+import { PlaygroundBroker } from "#brokers/PlaygroundBroker";
 
 export const plugin: MidaPlugin = new MidaPlugin({
     name: "MidaPlayground",
@@ -14,6 +14,6 @@ export const plugin: MidaPlugin = new MidaPlugin({
     },
 });
 
-export { PlaygroundBroker } from "#broker/PlaygroundBroker";
-export { PlaygroundBrokerAccount } from "#broker/PlaygroundBrokerAccount";
-export { PlaygroundBrokerAccountParameters } from "#broker/PlaygroundBrokerAccountParameters";
+export { PlaygroundBroker } from "#brokers/PlaygroundBroker";
+export { PlaygroundBrokerAccount } from "#brokers/PlaygroundBrokerAccount";
+export { PlaygroundBrokerAccountParameters } from "#brokers/PlaygroundBrokerAccountParameters";

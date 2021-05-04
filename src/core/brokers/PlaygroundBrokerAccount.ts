@@ -10,7 +10,7 @@ import {
     MidaSymbolQuotationPriceType,
     MidaSymbol,
 } from "@reiryoku/mida";
-import { PlaygroundBrokerAccountParameters } from "#broker/PlaygroundBrokerAccountParameters";
+import { PlaygroundBrokerAccountParameters } from "#brokers/PlaygroundBrokerAccountParameters";
 
 export class PlaygroundBrokerAccount extends MidaBrokerAccount {
     private _localDate: Date;

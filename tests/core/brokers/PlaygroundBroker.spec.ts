@@ -1,5 +1,5 @@
-import { PlaygroundBroker } from "#broker/PlaygroundBroker";
-import { PlaygroundBrokerAccount } from "#broker/PlaygroundBrokerAccount";
+import { PlaygroundBroker } from "#brokers/PlaygroundBroker";
+import { PlaygroundBrokerAccount } from "#brokers/PlaygroundBrokerAccount";
 
 describe("PlaygroundBroker", () => {
     describe(".login", () => {
