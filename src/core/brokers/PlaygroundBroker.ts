@@ -4,7 +4,7 @@ import { PlaygroundBrokerAccount } from "#brokers/PlaygroundBrokerAccount";
 export class PlaygroundBroker extends MidaBroker {
     public constructor () {
         super({
-            name: "PlaygroundBroker",
+            name: "Playground",
             websiteUri: "",
         });
     }

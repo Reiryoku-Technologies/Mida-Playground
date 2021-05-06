@@ -25,6 +25,12 @@
     },
     "main": "./build/entry/node/main.js",
     "types": "./build/entry/node/main.d.ts",
+    "files": [
+        "build",
+        "entry",
+        "src",
+        "tests"
+    ],
     "dependencies": {
         "@reiryoku/mida": "^1.0.0"
     },
@@ -35,7 +41,7 @@
         "tslint": "5.18.0",
         "ttypescript": "1.5.12",
         "typedoc": "0.20.19",
-        "typescript": "4.2.4",
+        "typescript": "4.1.5",
         "typescript-transform-paths": "2.2.3"
     }
 }

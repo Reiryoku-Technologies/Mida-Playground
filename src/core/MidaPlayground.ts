@@ -5,7 +5,7 @@ import {
 import { PlaygroundBroker } from "#brokers/PlaygroundBroker";
 
 export const plugin: MidaPlugin = new MidaPlugin({
-    name: "MidaPlayground",
+    name: "Mida Playground",
     description: "A Mida plugin for paper trading and backtesting.",
     version: "1.0.0",
 
