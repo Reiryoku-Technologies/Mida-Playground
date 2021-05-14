@@ -1,2 +1,2 @@
-# Mida Playground
-A Mida plugin for paper trading and backtesting.
+# Mida PlayTrader
+A Mida plugin to practice and backtest operations in global financial markets.

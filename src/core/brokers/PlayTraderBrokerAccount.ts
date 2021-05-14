@@ -10,9 +10,9 @@ import {
     MidaSymbolQuotationPriceType,
     MidaSymbol,
 } from "@reiryoku/mida";
-import { PlaygroundBrokerAccountParameters } from "#brokers/PlaygroundBrokerAccountParameters";
+import { PlayTraderBrokerAccountParameters } from "#brokers/PlayTraderBrokerAccountParameters";
 
-export class PlaygroundBrokerAccount extends MidaBrokerAccount {
+export class PlayTraderBrokerAccount extends MidaBrokerAccount {
     private _localDate: Date;
     private _balance: number;
     private _ticketsCounter: number;
@@ -45,7 +45,7 @@ export class PlaygroundBrokerAccount extends MidaBrokerAccount {
         fixedOrderCommission = 0,
         marginCallLevel = 100,
         stopOutLevel = 50,
-    }: PlaygroundBrokerAccountParameters) {
+    }: PlayTraderBrokerAccountParameters) {
         super({ id, ownerName, type: MidaBrokerAccountType.DEMO, currency, broker, });
 
         this._localDate = new Date(localDate || 0);

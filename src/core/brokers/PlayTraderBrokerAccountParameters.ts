@@ -1,6 +1,6 @@
 import { MidaBroker } from "@reiryoku/mida";
 
-export type PlaygroundBrokerAccountParameters = {
+export type PlayTraderBrokerAccountParameters = {
     id: string;
     ownerName: string;
     broker: MidaBroker;
