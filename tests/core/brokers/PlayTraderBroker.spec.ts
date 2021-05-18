@@ -1,14 +1,14 @@
-import { PlayTraderBroker } from "#brokers/PlayTraderBroker";
-import { PlayTraderBrokerAccount } from "#brokers/PlayTraderBrokerAccount";
+import { MidaPlaygroundBroker } from "#brokers/MidaPlaygroundBroker";
+import { MidaPlaygroundBrokerAccount } from "#brokers/MidaPlaygroundBrokerAccount";
 
-describe(PlayTraderBroker.name, () => {
+describe(MidaPlaygroundBroker.name, () => {
     describe(".login", () => {
         it("returns a correctly configured account", async () => {
             const actualDate: Date = new Date();
             const currency: string = "USD";
             const balance: number = 10000;
-            const broker: PlayTraderBroker = new PlayTraderBroker();
-            const account: PlayTraderBrokerAccount = await broker.login({
+            const broker: MidaPlaygroundBroker = new MidaPlaygroundBroker();
+            const account: MidaPlaygroundBrokerAccount = await broker.login({
                 localDate: actualDate,
                 currency,
                 balance,

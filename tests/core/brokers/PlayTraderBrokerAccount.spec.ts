@@ -6,16 +6,16 @@ import {
     MidaSymbolQuotation,
     MidaSymbolTick,
 } from "@reiryoku/mida";
-import { PlayTraderBroker } from "#brokers/PlayTraderBroker";
-import { PlayTraderBrokerAccount } from "#brokers/PlayTraderBrokerAccount";
+import { MidaPlaygroundBroker } from "#brokers/MidaPlaygroundBroker";
+import { MidaPlaygroundBrokerAccount } from "#brokers/MidaPlaygroundBrokerAccount";
 
-describe(PlayTraderBrokerAccount.name, () => {
-    const broker: PlayTraderBroker = new PlayTraderBroker();
+describe(MidaPlaygroundBrokerAccount.name, () => {
+    const broker: MidaPlaygroundBroker = new MidaPlaygroundBroker();
 
     describe(".localDate", () => {
         it("is set correctly", async () => {
             const actualDate: Date = new Date();
-            const account: PlayTraderBrokerAccount = await broker.login();
+            const account: MidaPlaygroundBrokerAccount = await broker.login();
 
             account.localDate = actualDate;
 
@@ -25,7 +25,7 @@ describe(PlayTraderBrokerAccount.name, () => {
 
     describe(".negativeBalanceProtection", () => {
         it("is set correctly", async () => {
-            const account: PlayTraderBrokerAccount = await broker.login();
+            const account: MidaPlaygroundBrokerAccount = await broker.login();
 
             account.negativeBalanceProtection = false;
 
@@ -40,7 +40,7 @@ describe(PlayTraderBrokerAccount.name, () => {
     describe(".fixedOrderCommission", () => {
         it("is set correctly", async () => {
             const fixedCommission: number = 123.45;
-            const account: PlayTraderBrokerAccount = await broker.login();
+            const account: MidaPlaygroundBrokerAccount = await broker.login();
 
             account.fixedOrderCommission = fixedCommission;
 
@@ -51,7 +51,7 @@ describe(PlayTraderBrokerAccount.name, () => {
     describe(".marginCallLevel", () => {
         it("is set correctly", async () => {
             const marginCallLevel: number = 200;
-            const account: PlayTraderBrokerAccount = await broker.login();
+            const account: MidaPlaygroundBrokerAccount = await broker.login();
 
             account.marginCallLevel = marginCallLevel;
 
@@ -62,7 +62,7 @@ describe(PlayTraderBrokerAccount.name, () => {
     describe(".stopOutLevel", () => {
         it("is set correctly", async () => {
             const stopOutLevel: number = 10;
-            const account: PlayTraderBrokerAccount = await broker.login();
+            const account: MidaPlaygroundBrokerAccount = await broker.login();
 
             account.stopOutLevel = stopOutLevel;
 
@@ -73,7 +73,7 @@ describe(PlayTraderBrokerAccount.name, () => {
     describe(".getBalance", () => {
         it("returns correct balance", async () => {
             const initialBalance: number = 10000;
-            const account: PlayTraderBrokerAccount = await broker.login({
+            const account: MidaPlaygroundBrokerAccount = await broker.login({
                 balance: initialBalance,
             });
 
@@ -84,7 +84,7 @@ describe(PlayTraderBrokerAccount.name, () => {
     describe(".getEquity", () => {
         it("returns balance when no positions are open", async () => {
             const initialBalance: number = 10000;
-            const account: PlayTraderBrokerAccount = await broker.login({
+            const account: MidaPlaygroundBrokerAccount = await broker.login({
                 balance: initialBalance,
             });
 
@@ -95,7 +95,7 @@ describe(PlayTraderBrokerAccount.name, () => {
 
     describe(".placeOrder", () => {
         it("opens sell market order", async () => {
-            const account: PlayTraderBrokerAccount = await broker.login();
+            const account: MidaPlaygroundBrokerAccount = await broker.login();
             const symbol: string = "TEST";
             const actualDate: Date = new Date();
             const ticks: MidaSymbolTick[] = [
@@ -147,7 +147,7 @@ describe(PlayTraderBrokerAccount.name, () => {
         });
 
         it("opens sell limit order", async () => {
-            const account: PlayTraderBrokerAccount = await broker.login();
+            const account: MidaPlaygroundBrokerAccount = await broker.login();
             const symbol: string = "TEST";
             const actualDate: Date = new Date();
             const ticks: MidaSymbolTick[] = [
@@ -201,7 +201,7 @@ describe(PlayTraderBrokerAccount.name, () => {
         });
 
         it("opens sell stop order", async () => {
-            const account: PlayTraderBrokerAccount = await broker.login();
+            const account: MidaPlaygroundBrokerAccount = await broker.login();
             const symbol: string = "TEST";
             const actualDate: Date = new Date();
             const ticks: MidaSymbolTick[] = [
@@ -275,7 +275,7 @@ describe(PlayTraderBrokerAccount.name, () => {
 
     describe(".loadTicks", () => {
         it("correctly adds ticks for the first time", async () => {
-            const account: PlayTraderBrokerAccount = await broker.login();
+            const account: MidaPlaygroundBrokerAccount = await broker.login();
             const symbol: string = "TEST";
             const ticks: MidaSymbolTick[] = [
                 new MidaSymbolTick({
@@ -316,7 +316,7 @@ describe(PlayTraderBrokerAccount.name, () => {
         });
 
         it("sorts added ticks from oldest to newest", async () => {
-            const account: PlayTraderBrokerAccount = await broker.login();
+            const account: MidaPlaygroundBrokerAccount = await broker.login();
             const symbol: string = "TEST";
             const ticks: MidaSymbolTick[] = [
                 new MidaSymbolTick({
@@ -370,7 +370,7 @@ describe(PlayTraderBrokerAccount.name, () => {
     describe(".elapseTime", () => {
         it("increases local date", async () => {
             const actualDate: Date = new Date();
-            const account: PlayTraderBrokerAccount = await broker.login();
+            const account: MidaPlaygroundBrokerAccount = await broker.login();
             const timeToElapse: number = 60;
 
             account.localDate = actualDate;
@@ -385,7 +385,7 @@ describe(PlayTraderBrokerAccount.name, () => {
         });
 
         it("triggers tick event for each elapsed tick", async () => {
-            const account: PlayTraderBrokerAccount = await broker.login();
+            const account: MidaPlaygroundBrokerAccount = await broker.login();
             const symbol: string = "TEST";
             const actualDate: Date = new Date();
             const ticks: MidaSymbolTick[] = [
@@ -453,7 +453,7 @@ describe(PlayTraderBrokerAccount.name, () => {
         });
 
         it("returns elapsed ticks", async () => {
-            const account: PlayTraderBrokerAccount = await broker.login();
+            const account: MidaPlaygroundBrokerAccount = await broker.login();
             const symbol: string = "TEST";
             const actualDate: Date = new Date();
             const ticks: MidaSymbolTick[] = [
@@ -495,7 +495,7 @@ describe(PlayTraderBrokerAccount.name, () => {
     describe(".deposit", () => {
         it("increases balance", async () => {
             const initialBalance: number = 10000;
-            const account: PlayTraderBrokerAccount = await broker.login({
+            const account: MidaPlaygroundBrokerAccount = await broker.login({
                 balance: initialBalance,
             });
 
@@ -512,7 +512,7 @@ describe(PlayTraderBrokerAccount.name, () => {
     describe(".withdraw", () => {
         it("decreases balance", async () => {
             const initialBalance: number = 10000;
-            const account: PlayTraderBrokerAccount = await broker.login({
+            const account: MidaPlaygroundBrokerAccount = await broker.login({
                 balance: initialBalance,
             });
 

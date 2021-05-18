@@ -2,7 +2,7 @@ import {
     MidaPlugin,
     MidaPluginActions,
 } from "@reiryoku/mida";
-import { PlayTraderBroker } from "#brokers/PlayTraderBroker";
+import { MidaPlaygroundBroker } from "#playground/MidaPlaygroundBroker";
 
 export default new MidaPlugin({
     id: "mida-playground",
@@ -11,10 +11,10 @@ export default new MidaPlugin({
     version: "1.0.0",
 
     install (actions: MidaPluginActions): void {
-        actions.addBroker(new PlayTraderBroker());
+        actions.addBroker(new MidaPlaygroundBroker());
     },
 });
 
-export { PlayTraderBroker } from "#brokers/PlayTraderBroker";
-export { PlayTraderBrokerAccount } from "#brokers/PlayTraderBrokerAccount";
-export { PlayTraderBrokerAccountParameters } from "#brokers/PlayTraderBrokerAccountParameters";
+export { MidaPlaygroundBroker } from "#playground/MidaPlaygroundBroker";
+export { MidaPlaygroundBrokerAccount } from "#playground/MidaPlaygroundBrokerAccount";
+export { MidaPlaygroundBrokerAccountParameters } from "#playground/MidaPlaygroundBrokerAccountParameters";
