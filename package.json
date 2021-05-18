@@ -1,11 +1,11 @@
 {
-    "name": "@reiryoku/mida-playtrader",
+    "name": "@reiryoku/mida-playground",
     "version": "1.0.0",
     "description": "A Mida plugin to practice and backtest operations in global financial markets.",
     "license": "MIT",
-    "homepage": "https://github.com/Reiryoku-Technologies/Mida-PlayTrader",
+    "homepage": "https://github.com/Reiryoku-Technologies/Mida-Playground",
     "bugs": {
-        "url": "https://github.com/Reiryoku-Technologies/Mida-PlayTrader/issues"
+        "url": "https://github.com/Reiryoku-Technologies/Mida-Playground/issues"
     },
     "author": {
         "name": "Vasile Pește / Reiryoku Technologies",
@@ -13,7 +13,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/Reiryoku-Technologies/Mida-PlayTrader.git"
+        "url": "https://github.com/Reiryoku-Technologies/Mida-Playground.git"
     },
     "scripts": {
         "lint": "tslint --project .",
