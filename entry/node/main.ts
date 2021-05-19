@@ -1,1 +1,1 @@
-export * from "!../../src/core/MidaPlayTrader";
+export * from "!/src/core/MidaPlayground";

@@ -10,7 +10,7 @@ import {
     MidaSymbolQuotationPriceType,
     MidaSymbol,
 } from "@reiryoku/mida";
-import { MidaPlaygroundBrokerAccountParameters } from "#playground/MidaPlaygroundBrokerAccountParameters";
+import { MidaPlaygroundBrokerAccountParameters } from "#brokers/playground/MidaPlaygroundBrokerAccountParameters";
 
 export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
     private _localDate: Date;
@@ -357,7 +357,7 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         });
     }
 
-    public async getSymbols (): Promise<MidaSymbol[]> {
+    public async getSymbols (): Promise<string[]> {
         return [];
     }
 

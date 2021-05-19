@@ -1,5 +1,5 @@
-import { MidaPlaygroundBroker } from "#brokers/MidaPlaygroundBroker";
-import { MidaPlaygroundBrokerAccount } from "#brokers/MidaPlaygroundBrokerAccount";
+import { MidaPlaygroundBroker } from "#brokers/playground/MidaPlaygroundBroker";
+import { MidaPlaygroundBrokerAccount } from "#brokers/playground/MidaPlaygroundBrokerAccount";
 
 describe(MidaPlaygroundBroker.name, () => {
     describe(".login", () => {

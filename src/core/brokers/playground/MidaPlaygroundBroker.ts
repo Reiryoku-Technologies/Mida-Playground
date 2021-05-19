@@ -1,10 +1,10 @@
 import { MidaBroker } from "@reiryoku/mida";
-import { MidaPlaygroundBrokerAccount } from "#brokers/MidaPlaygroundBrokerAccount";
+import { MidaPlaygroundBrokerAccount } from "#brokers/playground/MidaPlaygroundBrokerAccount";
 
 export class MidaPlaygroundBroker extends MidaBroker {
     public constructor () {
         super({
-            name: "PlayTrader",
+            name: "#Playground",
             websiteUri: "",
         });
     }

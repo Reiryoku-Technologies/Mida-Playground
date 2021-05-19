@@ -6,8 +6,8 @@ import {
     MidaSymbolQuotation,
     MidaSymbolTick,
 } from "@reiryoku/mida";
-import { MidaPlaygroundBroker } from "#brokers/MidaPlaygroundBroker";
-import { MidaPlaygroundBrokerAccount } from "#brokers/MidaPlaygroundBrokerAccount";
+import { MidaPlaygroundBroker } from "#brokers/playground/MidaPlaygroundBroker";
+import { MidaPlaygroundBrokerAccount } from "#brokers/playground/MidaPlaygroundBrokerAccount";
 
 describe(MidaPlaygroundBrokerAccount.name, () => {
     const broker: MidaPlaygroundBroker = new MidaPlaygroundBroker();

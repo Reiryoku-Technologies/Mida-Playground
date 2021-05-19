@@ -1,9 +1,9 @@
 import { MidaPlugin } from "@reiryoku/mida";
 
-describe("MidaPlayTrader", () => {
+describe("MidaPlayground", () => {
     describe("exports", () => {
         it("a MidaPlugin instance called plugin", () => {
-            expect(require("!/../../src/core/MidaPlayTrader").plugin).toBeInstanceOf(MidaPlugin);
+            expect(require("!/src/core/MidaPlayground").plugin).toBeInstanceOf(MidaPlugin);
         });
     });
 });
