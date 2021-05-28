@@ -142,13 +142,11 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         let closePrice: number | undefined;
 
         if (order.status === MidaBrokerOrderStatusType.OPEN) {
-            const lastTick: MidaSymbolTick = await this.getSymbolLastTick(order.symbol);
-
             if (order.type === MidaBrokerOrderType.SELL) {
-                closePrice = lastTick.ask;
+                closePrice = await this.getSymbolAsk(order.symbol);
             }
             else if (order.type === MidaBrokerOrderType.BUY) {
-                closePrice = lastTick.bid;
+                closePrice = await this.getSymbolBid(order.symbol);
             }
             else {
                 throw new Error();
@@ -192,7 +190,6 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
 
     public async placeOrder (directives: MidaBrokerOrderDirectives): Promise<MidaBrokerOrder> {
         const symbol: string = directives.symbol;
-        const lastTick: MidaSymbolTick = await this.getSymbolLastTick(symbol);
         const isBuyOrder: boolean = directives.type === MidaBrokerOrderType.BUY;
         const isMarketOrder: boolean = !Number.isFinite(directives.stop) && !Number.isFinite(directives.limit);
 
@@ -203,8 +200,8 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
             requestDate: this._localDate,
             creationDate: this._localDate,
             openDate: isMarketOrder ? this._localDate : undefined,
-            creationPrice: isBuyOrder ? lastTick.ask : lastTick.bid,
-            openPrice: isMarketOrder ? (isBuyOrder ? lastTick.ask : lastTick.bid) : undefined,
+            creationPrice: isBuyOrder ? (await this.getSymbolAsk(symbol)) : (await this.getSymbolBid(symbol)),
+            openPrice: isMarketOrder ? (isBuyOrder ? (await this.getSymbolAsk(symbol)) : (await this.getSymbolBid(symbol))) : undefined,
         });
 
         this._orders.set(order.ticket, order);
@@ -223,14 +220,13 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
             throw new Error();
         }
 
-        const lastTick: MidaSymbolTick = await this.getSymbolLastTick(order.symbol);
         let cancelPrice: number | undefined;
 
         if (order.type === MidaBrokerOrderType.SELL) {
-            cancelPrice = lastTick.ask;
+            cancelPrice = await this.getSymbolAsk(order.symbol);
         }
         else if (order.type === MidaBrokerOrderType.BUY) {
-            cancelPrice = lastTick.bid;
+            cancelPrice = await this.getSymbolBid(order.symbol);
         }
         else {
             throw new Error();
@@ -258,14 +254,13 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
             throw new Error();
         }
 
-        const lastTick: MidaSymbolTick = await this.getSymbolLastTick(order.symbol);
         let closePrice: number | undefined;
 
         if (order.type === MidaBrokerOrderType.SELL) {
-            closePrice = lastTick.ask;
+            closePrice = await this.getSymbolAsk(order.symbol);
         }
         else if (order.type === MidaBrokerOrderType.BUY) {
-            closePrice = lastTick.bid;
+            closePrice = await this.getSymbolBid(order.symbol);
         }
         else {
             throw new Error();
@@ -373,14 +368,28 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         return [];
     }
 
-    public async getSymbolLastTick (symbol: string): Promise<MidaSymbolTick> {
-        const lastTick: MidaSymbolTick = this._lastTicks[symbol];
+    public async getSymbolLastTick (symbol: string): Promise<MidaSymbolTick | undefined> {
+        return this._lastTicks[symbol];
+    }
+
+    public async getSymbolBid (symbol: string): Promise<number> {
+        const lastTick: MidaSymbolTick | undefined = await this.getSymbolLastTick(symbol);
 
         if (!lastTick) {
             throw new Error();
         }
 
-        return lastTick;
+        return lastTick.bid;
+    }
+
+    public async getSymbolAsk (symbol: string): Promise<number> {
+        const lastTick: MidaSymbolTick | undefined = await this.getSymbolLastTick(symbol);
+
+        if (!lastTick) {
+            throw new Error();
+        }
+
+        return lastTick.ask;
     }
 
     /**
@@ -454,14 +463,13 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
             throw new Error();
         }
 
-        const lastTick: MidaSymbolTick = await this.getSymbolLastTick(order.symbol);
         let openPrice: number | undefined;
 
         if (order.type === MidaBrokerOrderType.SELL) {
-            openPrice = lastTick.bid;
+            openPrice = await this.getSymbolBid(order.symbol);
         }
         else if (order.type === MidaBrokerOrderType.BUY) {
-            openPrice = lastTick.ask;
+            openPrice = await this.getSymbolAsk(order.symbol);
         }
         else {
             throw new Error();
