@@ -1,13 +1,15 @@
 import {
-    MidaEvent,
     MidaBrokerOrder,
     MidaBrokerOrderStatusType,
     MidaBrokerOrderType,
+    MidaEvent,
+    MidaSymbol,
     MidaSymbolQuotation,
     MidaSymbolTick,
+    MidaSymbolType,
 } from "@reiryoku/mida";
-import { MidaPlaygroundBroker } from "#brokers/playground/MidaPlaygroundBroker";
-import { MidaPlaygroundBrokerAccount } from "#brokers/playground/MidaPlaygroundBrokerAccount";
+import {MidaPlaygroundBroker} from "#brokers/playground/MidaPlaygroundBroker";
+import {MidaPlaygroundBrokerAccount} from "#brokers/playground/MidaPlaygroundBrokerAccount";
 
 describe(MidaPlaygroundBrokerAccount.name, () => {
     const broker: MidaPlaygroundBroker = new MidaPlaygroundBroker();
@@ -96,12 +98,22 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
     describe(".placeOrder", () => {
         it("opens sell market order", async () => {
             const account: MidaPlaygroundBrokerAccount = await broker.login();
-            const symbol: string = "TEST";
+            const symbol: MidaSymbol = new MidaSymbol({
+                symbol: "TEST",
+                brokerAccount: account,
+                description: "",
+                type: MidaSymbolType.CRYPTO,
+                digits: 0,
+                leverage: 1 / 20,
+                minLots: 1,
+                maxLots: 100,
+                lotUnits: 1,
+            });
             const actualDate: Date = new Date();
             const ticks: MidaSymbolTick[] = [
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: actualDate,
                         bid: 1,
                         ask: 2,
@@ -109,7 +121,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: new Date(actualDate.valueOf() + 1000),
                         bid: 3,
                         ask: 4,
@@ -117,7 +129,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: new Date(actualDate.valueOf() + 2000),
                         bid: 5,
                         ask: 6,
@@ -125,6 +137,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
             ];
 
+            await account.registerSymbol(symbol);
             await account.loadTicks(ticks);
 
             account.localDate = new Date(actualDate.valueOf() - 500);
@@ -132,7 +145,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
             await account.elapseTime(1);
 
             const order: MidaBrokerOrder = await account.placeOrder({
-                symbol,
+                symbol: symbol.toString(),
                 type: MidaBrokerOrderType.SELL,
                 lots: 1,
             });
@@ -148,12 +161,22 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
 
         it("opens sell limit order", async () => {
             const account: MidaPlaygroundBrokerAccount = await broker.login();
-            const symbol: string = "TEST";
+            const symbol: MidaSymbol = new MidaSymbol({
+                symbol: "TEST",
+                brokerAccount: account,
+                description: "",
+                type: MidaSymbolType.CRYPTO,
+                digits: 0,
+                leverage: 1 / 20,
+                minLots: 1,
+                maxLots: 100,
+                lotUnits: 1,
+            });
             const actualDate: Date = new Date();
             const ticks: MidaSymbolTick[] = [
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: actualDate,
                         bid: 1,
                         ask: 2,
@@ -161,7 +184,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: new Date(actualDate.valueOf() + 1000),
                         bid: 3,
                         ask: 4,
@@ -169,7 +192,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: new Date(actualDate.valueOf() + 2000),
                         bid: 5,
                         ask: 6,
@@ -177,6 +200,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
             ];
 
+            await account.registerSymbol(symbol);
             await account.loadTicks(ticks);
 
             account.localDate = new Date(actualDate.valueOf() - 500);
@@ -184,7 +208,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
             await account.elapseTime(1);
 
             const order: MidaBrokerOrder = await account.placeOrder({
-                symbol,
+                symbol: symbol.toString(),
                 type: MidaBrokerOrderType.SELL,
                 lots: 1,
                 limit: 3,
@@ -202,12 +226,22 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
 
         it("opens sell stop order", async () => {
             const account: MidaPlaygroundBrokerAccount = await broker.login();
-            const symbol: string = "TEST";
+            const symbol: MidaSymbol = new MidaSymbol({
+                symbol: "TEST",
+                brokerAccount: account,
+                description: "",
+                type: MidaSymbolType.CRYPTO,
+                digits: 0,
+                leverage: 1 / 20,
+                minLots: 1,
+                maxLots: 100,
+                lotUnits: 1,
+            });
             const actualDate: Date = new Date();
             const ticks: MidaSymbolTick[] = [
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: actualDate,
                         bid: 5,
                         ask: 6,
@@ -215,7 +249,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: new Date(actualDate.valueOf() + 1000),
                         bid: 3,
                         ask: 4,
@@ -223,7 +257,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: new Date(actualDate.valueOf() + 2000),
                         bid: 1,
                         ask: 2,
@@ -231,6 +265,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
             ];
 
+            await account.registerSymbol(symbol);
             await account.loadTicks(ticks);
 
             account.localDate = new Date(actualDate.valueOf() - 500);
@@ -238,7 +273,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
             await account.elapseTime(1);
 
             const order: MidaBrokerOrder = await account.placeOrder({
-                symbol,
+                symbol: symbol.toString(),
                 type: MidaBrokerOrderType.SELL,
                 lots: 1,
                 stop: 3,
@@ -276,11 +311,21 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
     describe(".loadTicks", () => {
         it("correctly adds ticks for the first time", async () => {
             const account: MidaPlaygroundBrokerAccount = await broker.login();
-            const symbol: string = "TEST";
+            const symbol: MidaSymbol = new MidaSymbol({
+                symbol: "TEST",
+                brokerAccount: account,
+                description: "",
+                type: MidaSymbolType.CRYPTO,
+                digits: 0,
+                leverage: 1 / 20,
+                minLots: 1,
+                maxLots: 100,
+                lotUnits: 1,
+            });
             const ticks: MidaSymbolTick[] = [
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: new Date(),
                         bid: 1,
                         ask: 2,
@@ -288,7 +333,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: new Date((new Date()).valueOf() + 1000),
                         bid: 2,
                         ask: 3,
@@ -296,7 +341,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: new Date((new Date()).valueOf() + 2000),
                         bid: 3,
                         ask: 4,
@@ -304,9 +349,10 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
             ];
 
+            await account.registerSymbol(symbol);
             await account.loadTicks(ticks);
 
-            const accountTicks: MidaSymbolTick[] = await account.getSymbolTicks(symbol);
+            const accountTicks: MidaSymbolTick[] = (await account.getSymbolTicks(symbol.toString())) as MidaSymbolTick[];
 
             expect(accountTicks.length).toBe(ticks.length);
 
@@ -317,11 +363,21 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
 
         it("sorts added ticks from oldest to newest", async () => {
             const account: MidaPlaygroundBrokerAccount = await broker.login();
-            const symbol: string = "TEST";
+            const symbol: MidaSymbol = new MidaSymbol({
+                symbol: "TEST",
+                brokerAccount: account,
+                description: "",
+                type: MidaSymbolType.CRYPTO,
+                digits: 0,
+                leverage: 1 / 20,
+                minLots: 1,
+                maxLots: 100,
+                lotUnits: 1,
+            });
             const ticks: MidaSymbolTick[] = [
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: new Date(),
                         bid: 1,
                         ask: 2,
@@ -329,7 +385,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: new Date((new Date()).valueOf() + 1000),
                         bid: 3,
                         ask: 4,
@@ -337,7 +393,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: new Date((new Date()).valueOf() - 2000),
                         bid: 5,
                         ask: 6,
@@ -345,7 +401,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: new Date((new Date()).valueOf() + 3000),
                         bid: 7,
                         ask: 8,
@@ -353,9 +409,10 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
             ];
 
+            await account.registerSymbol(symbol);
             await account.loadTicks(ticks);
 
-            const accountTicks: MidaSymbolTick[] = await account.getSymbolTicks(symbol);
+            const accountTicks: MidaSymbolTick[] = (await account.getSymbolTicks(symbol.toString())) as MidaSymbolTick[];
 
             expect(accountTicks.length).toBe(ticks.length);
 
@@ -386,12 +443,22 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
 
         it("triggers tick event for each elapsed tick", async () => {
             const account: MidaPlaygroundBrokerAccount = await broker.login();
-            const symbol: string = "TEST";
+            const symbol: MidaSymbol = new MidaSymbol({
+                symbol: "TEST",
+                brokerAccount: account,
+                description: "",
+                type: MidaSymbolType.CRYPTO,
+                digits: 0,
+                leverage: 1 / 20,
+                minLots: 1,
+                maxLots: 100,
+                lotUnits: 1,
+            });
             const actualDate: Date = new Date();
             const ticks: MidaSymbolTick[] = [
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: actualDate,
                         bid: 1,
                         ask: 2,
@@ -399,7 +466,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: new Date(actualDate.valueOf() + 1000),
                         bid: 3,
                         ask: 4,
@@ -407,7 +474,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: new Date(actualDate.valueOf() + 2000),
                         bid: 5,
                         ask: 6,
@@ -421,7 +488,9 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
 
             account.localDate = new Date(actualDate.valueOf() - 500);
 
+            await account.registerSymbol(symbol);
             await account.loadTicks(ticks);
+            await account.watchSymbol(symbol.toString());
 
             account.on("tick", (event: MidaEvent): void => {
                 const tick: MidaSymbolTick = event.descriptor.tick;
@@ -454,12 +523,22 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
 
         it("returns elapsed ticks", async () => {
             const account: MidaPlaygroundBrokerAccount = await broker.login();
-            const symbol: string = "TEST";
+            const symbol: MidaSymbol = new MidaSymbol({
+                symbol: "TEST",
+                brokerAccount: account,
+                description: "",
+                type: MidaSymbolType.CRYPTO,
+                digits: 0,
+                leverage: 1 / 20,
+                minLots: 1,
+                maxLots: 100,
+                lotUnits: 1,
+            });
             const actualDate: Date = new Date();
             const ticks: MidaSymbolTick[] = [
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: actualDate,
                         bid: 1,
                         ask: 2,
@@ -467,7 +546,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: new Date(actualDate.valueOf() + 1000),
                         bid: 3,
                         ask: 4,
@@ -475,7 +554,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
                 }),
                 new MidaSymbolTick({
                     quotation: new MidaSymbolQuotation({
-                        symbol,
+                        symbol: symbol.toString(),
                         date: new Date(actualDate.valueOf() + 2000),
                         bid: 5,
                         ask: 6,
@@ -485,6 +564,7 @@ describe(MidaPlaygroundBrokerAccount.name, () => {
 
             account.localDate = new Date(actualDate.valueOf() + 500);
 
+            await account.registerSymbol(symbol);
             await account.loadTicks(ticks);
 
             expect((await account.elapseTime(1))[0].equals(ticks[1])).toBe(true);

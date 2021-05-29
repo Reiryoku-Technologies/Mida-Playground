@@ -12,7 +12,7 @@ export class MidaPlaygroundBroker extends MidaBroker {
         });
     }
 
-    public async login (parameters: GenericObject): Promise<MidaPlaygroundBrokerAccount> {
+    public async login (parameters: GenericObject = {}): Promise<MidaPlaygroundBrokerAccount> {
         return new MidaPlaygroundBrokerAccount({
             ...parameters as any,
             broker: this,
