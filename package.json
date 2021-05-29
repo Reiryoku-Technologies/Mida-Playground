@@ -32,7 +32,7 @@
         "tests"
     ],
     "devDependencies": {
-        "@reiryoku/mida": "^1.0.0",
+        "@reiryoku/mida": "^2.0.0",
         "@types/jest": "26.0.20",
         "@types/node": "12.7.2",
         "jest": "26.6.3",
@@ -43,6 +43,6 @@
         "typescript-transform-paths": "2.2.3"
     },
     "peerDependencies": {
-        "@reiryoku/mida": "^1.0.0"
+        "@reiryoku/mida": "^2.0.0"
     }
 }

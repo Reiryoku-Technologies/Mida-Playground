@@ -1,2 +1,2 @@
 # Mida Playground
-A Mida plugin to practice and backtest operations in global financial markets.
+A [Mida](https://github.com/Reiryoku-Technologies/Mida) plugin to practice and backtest operations in global financial markets.

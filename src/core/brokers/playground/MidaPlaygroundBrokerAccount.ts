@@ -8,7 +8,7 @@ import {
     MidaBrokerOrderType,
     MidaSymbolPeriod,
     MidaSymbolQuotationPriceType,
-    MidaSymbol,
+    MidaSymbol, GenericObject, MidaError, MidaBrokerErrorType,
 } from "@reiryoku/mida";
 import { MidaPlaygroundBrokerAccountParameters } from "#brokers/playground/MidaPlaygroundBrokerAccountParameters";
 
@@ -21,18 +21,12 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
     private _fixedOrderCommission: number;
     private _marginCallLevel: number;
     private _stopOutLevel: number;
-    private readonly _localTicks: {
-        [symbol: string]: MidaSymbolTick[];
-    };
-    private readonly _lastTicks: {
-        [symbol: string]: MidaSymbolTick;
-    };
-    private readonly _localPeriods: {
-        [symbol: string]: MidaSymbolPeriod[];
-    };
-    private readonly _lastPeriods: {
-        [symbol: string]: MidaSymbolPeriod;
-    };
+    private readonly _localSymbols: Map<string, GenericObject>;
+    private readonly _localTicks: Map<string, MidaSymbolTick[]>;
+    private readonly _lastTicks: Map<string, MidaSymbolTick>;
+    private readonly _localPeriods: Map<string, MidaSymbolPeriod[]>;
+    private readonly _lastPeriods: Map<string, MidaSymbolPeriod>;
+    private readonly _watchedSymbols: Set<string>;
 
     public constructor ({
         id,
@@ -49,10 +43,11 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         super({ id, ownerName, type: MidaBrokerAccountType.DEMO, currency, broker, });
 
         this._localDate = new Date(localDate || 0);
-        this._localTicks = {};
-        this._lastTicks = {};
-        this._localPeriods = {};
-        this._lastPeriods = {};
+        this._localSymbols = new Map();
+        this._localTicks = new Map();
+        this._lastTicks = new Map();
+        this._localPeriods = new Map();
+        this._lastPeriods = new Map();
         this._balance = balance;
         this._ticketsCounter = 0;
         this._orders = new Map();
@@ -60,6 +55,7 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         this._fixedOrderCommission = fixedOrderCommission;
         this._marginCallLevel = marginCallLevel;
         this._stopOutLevel = stopOutLevel;
+        this._watchedSymbols = new Set();
     }
 
     public get localDate (): Date {
@@ -356,19 +352,25 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         return [];
     }
 
-    public async getSymbol (symbol: string): Promise<MidaSymbol> {
+    public async getSymbol (symbol: string): Promise<MidaSymbol | undefined> {
         throw new Error();
     }
 
     public async isSymbolMarketOpen (symbol: string): Promise<boolean> {
+        await this._assertSymbolExists(symbol);
+
         throw new Error();
     }
 
     public async getSymbolPeriods (symbol: string, timeframe: number, priceType?: MidaSymbolQuotationPriceType): Promise<MidaSymbolPeriod[]> {
+        await this._assertSymbolExists(symbol);
+
         return [];
     }
 
     public async getSymbolLastTick (symbol: string): Promise<MidaSymbolTick | undefined> {
+        await this._assertSymbolExists(symbol);
+
         return this._lastTicks[symbol];
     }
 
@@ -390,6 +392,20 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         }
 
         return lastTick.ask;
+    }
+
+    public async watchSymbol (symbol: string): Promise<void> {
+        await this._assertSymbolExists(symbol);
+
+        this._watchedSymbols.add(symbol);
+    }
+
+    public async getWatchedSymbols (): Promise<string[]> {
+        return [ ...this._watchedSymbols.values(), ];
+    }
+
+    public async unwatchSymbol (symbol: string): Promise<void> {
+        this._watchedSymbols.delete(symbol);
     }
 
     /**
@@ -452,6 +468,18 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         return this._localTicks[symbol] || [];
     }
 
+    private async _assertSymbolExists (symbol: string): Promise<void> {
+        if (!this._localSymbols.has(symbol)) {
+            throw new MidaError({ type: MidaBrokerErrorType.INVALID_SYMBOL, });
+        }
+    }
+
+    private async _assertOrderExists (ticket: number): Promise<void> {
+        if (!this._orders.has(ticket)) {
+            throw new MidaError({ type: MidaBrokerErrorType.ORDER_NOT_FOUND, });
+        }
+    }
+
     private async _openPendingOrder (ticket: number): Promise<void> {
         const order: MidaBrokerOrder | undefined = this._orders.get(ticket);
 
@@ -491,15 +519,15 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
 
         await Promise.all(tasks);
 
-        this.notifyListeners("tick", { tick, });
+        if (this._watchedSymbols.has(tick.symbol)) {
+            this.notifyListeners("tick", { tick, });
+        }
 
         // <margin-call>
         const marginLevel: number = await this.getMarginLevel();
 
         if (Number.isFinite(marginLevel) && marginLevel <= this._marginCallLevel) {
-            this.notifyListeners("margin-call", {
-                marginLevel,
-            });
+            this.notifyListeners("margin-call", { marginLevel, });
         }
         // </margin-call>
     }
