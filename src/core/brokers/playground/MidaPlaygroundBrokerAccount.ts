@@ -9,7 +9,7 @@ import {
     MidaBrokerOrderDirectives,
     MidaBrokerOrderType,
     MidaSymbolPeriod,
-    MidaSymbolQuotationPriceType,
+    MidaSymbolPriceType,
     MidaSymbol,
 } from "@reiryoku/mida";
 import { MidaPlaygroundBrokerAccountParameters } from "#brokers/playground/MidaPlaygroundBrokerAccountParameters";
@@ -17,8 +17,8 @@ import { MidaPlaygroundBrokerAccountParameters } from "#brokers/playground/MidaP
 export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
     private _localDate: Date;
     private _balance: number;
-    private _ticketsCounter: number;
-    private readonly _orders: Map<number, MidaBrokerOrder>;
+    private _idsCounter: number;
+    private readonly _orders: Map<string, MidaBrokerOrder>;
     private _globalLeverage: number;
     private _negativeBalanceProtection: boolean;
     private _fixedOrderCommission: number;
@@ -48,12 +48,14 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
             ownerName,
             type: MidaBrokerAccountType.DEMO,
             currency,
+            globalLeverage: 0,
+            isHedged: true,
             broker,
         });
 
         this._localDate = new Date(localDate || 0);
         this._balance = balance;
-        this._ticketsCounter = 0;
+        this._idsCounter = 0;
         this._orders = new Map();
         this._globalLeverage = 1 / 500;
         this._negativeBalanceProtection = negativeBalanceProtection;
@@ -136,14 +138,14 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         return [ ...this._orders.values(), ];
     }
 
-    public async getOrder (ticket: number): Promise<MidaBrokerOrder | undefined> {
-        return this._orders.get(ticket);
+    public async getOrder (id: string): Promise<MidaBrokerOrder | undefined> {
+        return this._orders.get(id);
     }
 
-    public async getOrderGrossProfit (ticket: number): Promise<number> {
-        await this._assertOrderExists(ticket);
+    public async getOrderGrossProfit (id: string): Promise<number> {
+        await this._assertOrderExists(id);
 
-        const order: MidaBrokerOrder = this._orders.get(ticket) as MidaBrokerOrder;
+        const order: MidaBrokerOrder = this._orders.get(id) as MidaBrokerOrder;
 
         const openPrice: number | undefined = order.openPrice;
 
@@ -185,23 +187,23 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         throw new Error();
     }
 
-    public async getOrderNetProfit (ticket: number): Promise<number> {
-        await this._assertOrderExists(ticket);
+    public async getOrderNetProfit (id: string): Promise<number> {
+        await this._assertOrderExists(id);
 
-        const tasks: Promise<number>[] = [ this.getOrderGrossProfit(ticket), this.getOrderSwaps(ticket), this.getOrderCommission(ticket), ];
+        const tasks: Promise<number>[] = [ this.getOrderGrossProfit(id), this.getOrderSwaps(id), this.getOrderCommission(id), ];
         const [ grossProfit, swaps, commission, ]: number[] = await Promise.all(tasks);
 
         return grossProfit + swaps - Math.abs(commission);
     }
 
-    public async getOrderSwaps (ticket: number): Promise<number> {
-        await this._assertOrderExists(ticket);
+    public async getOrderSwaps (id: string): Promise<number> {
+        await this._assertOrderExists(id);
 
         return 0;
     }
 
-    public async getOrderCommission (ticket: number): Promise<number> {
-        await this._assertOrderExists(ticket);
+    public async getOrderCommission (id: string): Promise<number> {
+        await this._assertOrderExists(id);
 
         return this._fixedOrderCommission;
     }
@@ -214,7 +216,7 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         const isMarketOrder: boolean = !Number.isFinite(directives.stop) && !Number.isFinite(directives.limit);
 
         const order: MidaBrokerOrder = new MidaBrokerOrder({
-            ticket: ++this._ticketsCounter,
+            id: (++this._idsCounter).toString(),
             brokerAccount: this,
             requestDirectives: directives,
             requestDate: this._localDate,
@@ -224,15 +226,15 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
             openPrice: isMarketOrder ? (isBuyOrder ? (await this.getSymbolAsk(symbol)) : (await this.getSymbolBid(symbol))) : undefined,
         });
 
-        this._orders.set(order.ticket, order);
+        this._orders.set(order.id, order);
 
         return order;
     }
 
-    public async cancelOrder (ticket: number): Promise<void> {
-        await this._assertOrderExists(ticket);
+    public async cancelOrder (id: string): Promise<void> {
+        await this._assertOrderExists(id);
 
-        const order: MidaBrokerOrder = this._orders.get(ticket) as MidaBrokerOrder;
+        const order: MidaBrokerOrder = this._orders.get(id) as MidaBrokerOrder;
 
         if (order.status !== MidaBrokerOrderStatusType.PENDING) {
             throw new Error();
@@ -255,16 +257,16 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         }
 
         this.notifyListeners("order-cancel", {
-            ticket: order.ticket,
-            date: new Date(this._localDate),
-            price: cancelPrice,
+            id: order.id,
+            cancelDate: new Date(this._localDate),
+            cancelPrice,
         });
     }
 
-    public async closeOrder (ticket: number): Promise<void> {
-        await this._assertOrderExists(ticket);
+    public async closeOrder (id: string): Promise<void> {
+        await this._assertOrderExists(id);
 
-        const order: MidaBrokerOrder = this._orders.get(ticket) as MidaBrokerOrder;
+        const order: MidaBrokerOrder = this._orders.get(id) as MidaBrokerOrder;
 
         if (order.status !== MidaBrokerOrderStatusType.OPEN) {
             throw new Error();
@@ -289,17 +291,16 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         this._balance += await order.getNetProfit();
 
         this.notifyListeners("order-close", {
-            ticket: order.ticket,
-            date: new Date(this._localDate),
-            price: closePrice,
+            id: order.id,
+            closeDate: new Date(this._localDate),
+            closePrice,
         });
     }
 
+    public async getOrderStopLoss (id: string): Promise<number | undefined> {
+        await this._assertOrderExists(id);
 
-    public async getOrderStopLoss (ticket: number): Promise<number | undefined> {
-        await this._assertOrderExists(ticket);
-
-        const order: MidaBrokerOrder | undefined = this._orders.get(ticket);
+        const order: MidaBrokerOrder | undefined = this._orders.get(id);
 
         if (!order) {
             throw new Error();
@@ -308,40 +309,40 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         return order.stopLoss;
     }
 
-    public async setOrderStopLoss (ticket: number, stopLoss: number): Promise<void> {
-        await this._assertOrderExists(ticket);
+    public async setOrderStopLoss (id: string, stopLoss: number): Promise<void> {
+        await this._assertOrderExists(id);
 
-        const order: MidaBrokerOrder | undefined = this._orders.get(ticket);
+        const order: MidaBrokerOrder | undefined = this._orders.get(id);
 
         if (!order) {
             throw new Error();
         }
 
         this.notifyListeners("order-directives", {
-            ticket: order.ticket,
+            id: order.id,
             stopLoss,
         });
     }
 
-    public async clearOrderStopLoss (ticket: number): Promise<void> {
-        await this._assertOrderExists(ticket);
+    public async clearOrderStopLoss (id: string): Promise<void> {
+        await this._assertOrderExists(id);
 
-        const order: MidaBrokerOrder | undefined = this._orders.get(ticket);
+        const order: MidaBrokerOrder | undefined = this._orders.get(id);
 
         if (!order) {
             throw new Error();
         }
 
         this.notifyListeners("order-directives", {
-            ticket: order.ticket,
+            id: order.id,
             stopLoss: undefined,
         });
     }
 
-    public async getOrderTakeProfit (ticket: number): Promise<number | undefined> {
-        await this._assertOrderExists(ticket);
+    public async getOrderTakeProfit (id: string): Promise<number | undefined> {
+        await this._assertOrderExists(id);
 
-        const order: MidaBrokerOrder | undefined = this._orders.get(ticket);
+        const order: MidaBrokerOrder | undefined = this._orders.get(id);
 
         if (!order) {
             throw new Error();
@@ -350,32 +351,32 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         return order.takeProfit;
     }
 
-    public async setOrderTakeProfit (ticket: number, takeProfit: number): Promise<void> {
-        await this._assertOrderExists(ticket);
+    public async setOrderTakeProfit (id: string, takeProfit: number): Promise<void> {
+        await this._assertOrderExists(id);
 
-        const order: MidaBrokerOrder | undefined = this._orders.get(ticket);
+        const order: MidaBrokerOrder | undefined = this._orders.get(id);
 
         if (!order) {
             throw new Error();
         }
 
         this.notifyListeners("order-directives", {
-            ticket: order.ticket,
+            id: order.id,
             takeProfit,
         });
     }
 
-    public async clearOrderTakeProfit (ticket: number): Promise<void> {
-        await this._assertOrderExists(ticket);
+    public async clearOrderTakeProfit (id: string): Promise<void> {
+        await this._assertOrderExists(id);
 
-        const order: MidaBrokerOrder | undefined = this._orders.get(ticket);
+        const order: MidaBrokerOrder | undefined = this._orders.get(id);
 
         if (!order) {
             throw new Error();
         }
 
         this.notifyListeners("order-directives", {
-            ticket: order.ticket,
+            id: order.id,
             takeProfit: undefined,
         });
     }
@@ -394,7 +395,7 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         throw new Error();
     }
 
-    public async getSymbolPeriods (symbol: string, timeframe: number, priceType?: MidaSymbolQuotationPriceType): Promise<MidaSymbolPeriod[]> {
+    public async getSymbolPeriods (symbol: string, timeframe: number, priceType?: MidaSymbolPriceType): Promise<MidaSymbolPeriod[]> {
         await this._assertSymbolExists(symbol);
 
         return [];
@@ -426,18 +427,14 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         return lastTick.ask;
     }
 
-    public async watchSymbol (symbol: string): Promise<void> {
+    public async watchSymbolTicks (symbol: string): Promise<void> {
         await this._assertSymbolExists(symbol);
 
         this._watchedSymbols.add(symbol);
     }
 
-    public async getWatchedSymbols (): Promise<string[]> {
-        return [ ...this._watchedSymbols.values(), ];
-    }
-
-    public async unwatchSymbol (symbol: string): Promise<void> {
-        this._watchedSymbols.delete(symbol);
+    public async logout (): Promise<void> {
+        throw new Error();
     }
 
     public async registerSymbol (symbol: MidaSymbol): Promise<void> {
@@ -508,14 +505,14 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         }
     }
 
-    private async _assertOrderExists (ticket: number): Promise<void> {
-        if (!this._orders.has(ticket)) {
+    private async _assertOrderExists (id: string): Promise<void> {
+        if (!this._orders.has(id)) {
             throw new MidaError({ type: MidaBrokerErrorType.ORDER_NOT_FOUND, });
         }
     }
 
-    private async _openPendingOrder (ticket: number): Promise<void> {
-        const order: MidaBrokerOrder | undefined = this._orders.get(ticket);
+    private async _openPendingOrder (id: string): Promise<void> {
+        const order: MidaBrokerOrder | undefined = this._orders.get(id);
 
         if (!order) {
             throw new Error();
@@ -542,9 +539,9 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         }
 
         this.notifyListeners("order-open", {
-            ticket: order.ticket,
-            date: new Date(this._localDate),
-            price: openPrice,
+            id: order.id,
+            openDate: new Date(this._localDate),
+            openPrice,
         });
     }
 
@@ -577,7 +574,7 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
                     (order.type === MidaBrokerOrderType.SELL && tick.bid >= order.limit)
                     || (order.type === MidaBrokerOrderType.BUY && tick.ask <= order.limit)
                 ) {
-                    await this._openPendingOrder(order.ticket);
+                    await this._openPendingOrder(order.id);
                 }
             }
             // </limit>
@@ -588,7 +585,7 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
                     (order.type === MidaBrokerOrderType.SELL && tick.bid <= order.stop)
                     || (order.type === MidaBrokerOrderType.BUY && tick.ask >= order.stop)
                 ) {
-                    await this._openPendingOrder(order.ticket);
+                    await this._openPendingOrder(order.id);
                 }
             }
             // </stop>
@@ -629,7 +626,7 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
                 await order.close();
 
                 this.notifyListeners("stop-out", {
-                    ticket: order.ticket,
+                    id: order.id,
                     marginLevel,
                 });
             }
