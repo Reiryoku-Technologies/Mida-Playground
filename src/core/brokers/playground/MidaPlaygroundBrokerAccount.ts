@@ -1,25 +1,30 @@
 import {
     MidaBrokerAccount,
-    MidaBrokerAccountType,
+    MidaBrokerAccountOperativity,
+    MidaBrokerAccountPositionAccounting,
+    MidaBrokerDeal,
     MidaBrokerErrorType,
-    MidaError,
     MidaBrokerOrder,
-    MidaSymbolTick,
-    MidaBrokerOrderStatusType,
     MidaBrokerOrderDirectives,
+    MidaBrokerOrderStatusType,
     MidaBrokerOrderType,
+    MidaBrokerPosition,
+    MidaDate,
+    MidaError,
+    MidaSymbol,
     MidaSymbolPeriod,
     MidaSymbolPriceType,
-    MidaSymbol,
+    MidaSymbolTick,
 } from "@reiryoku/mida";
-import { MidaPlaygroundBrokerAccountParameters } from "#brokers/playground/MidaPlaygroundBrokerAccountParameters";
+import {MidaPlaygroundBrokerAccountParameters} from "#brokers/playground/MidaPlaygroundBrokerAccountParameters";
 
+// @ts-ignore
 export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
     private _localDate: Date;
     private _balance: number;
-    private _idsCounter: number;
     private readonly _orders: Map<string, MidaBrokerOrder>;
-    private _globalLeverage: number;
+    private readonly _deals: Map<string, MidaBrokerDeal>;
+    private readonly _positions: Map<string, MidaBrokerPosition>;
     private _negativeBalanceProtection: boolean;
     private _fixedOrderCommission: number;
     private _marginCallLevel: number;
@@ -36,7 +41,6 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         ownerName,
         broker,
         localDate,
-        currency = "USD",
         balance = 100000,
         negativeBalanceProtection = false,
         fixedOrderCommission = 0,
@@ -45,19 +49,21 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
     }: MidaPlaygroundBrokerAccountParameters) {
         super({
             id,
-            ownerName,
-            type: MidaBrokerAccountType.DEMO,
-            currency,
-            globalLeverage: 0,
-            isHedged: true,
             broker,
+            creationDate: new MidaDate(),
+            ownerName,
+            currencyIso: "EUR",
+            currencyDigits: 2,
+            operativity: MidaBrokerAccountOperativity.DEMO,
+            positionAccounting: MidaBrokerAccountPositionAccounting.HEDGED,
+            indicativeLeverage: 30,
         });
 
         this._localDate = new Date(localDate || 0);
         this._balance = balance;
-        this._idsCounter = 0;
         this._orders = new Map();
-        this._globalLeverage = 1 / 500;
+        this._deals = new Map();
+        this._positions = new Map();
         this._negativeBalanceProtection = negativeBalanceProtection;
         this._fixedOrderCommission = fixedOrderCommission;
         this._marginCallLevel = marginCallLevel;
@@ -78,14 +84,6 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         this._localDate = new Date(value);
     }
 
-    public get globalLeverage (): number {
-        return this._globalLeverage;
-    }
-
-    public set globalLeverage (value: number) {
-        this._globalLeverage = value;
-    }
-
     public get negativeBalanceProtection (): boolean {
         return this._negativeBalanceProtection;
     }
@@ -98,24 +96,24 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         return this._fixedOrderCommission;
     }
 
-    public set fixedOrderCommission (value: number) {
-        this._fixedOrderCommission = Math.abs(value || 0);
+    public set fixedOrderCommission (commission: number) {
+        this._fixedOrderCommission = Math.abs(commission) * -1;
     }
 
     public get marginCallLevel (): number {
         return this._marginCallLevel;
     }
 
-    public set marginCallLevel (value: number) {
-        this._marginCallLevel = value;
+    public set marginCallLevel (level: number) {
+        this._marginCallLevel = level;
     }
 
     public get stopOutLevel (): number {
         return this._stopOutLevel;
     }
 
-    public set stopOutLevel (value: number) {
-        this._stopOutLevel = value;
+    public set stopOutLevel (level: number) {
+        this._stopOutLevel = level;
     }
 
     public async getBalance (): Promise<number> {

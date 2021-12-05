@@ -7,12 +7,13 @@ import { MidaPlaygroundBrokerAccount } from "#brokers/playground/MidaPlaygroundB
 export class MidaPlaygroundBroker extends MidaBroker {
     public constructor () {
         super({
-            name: "Playground",
+            name: "Mida Playground",
+            legalName: "Mida Playground",
             websiteUri: "https://github.com/Reiryoku-Technologies/Mida-Playground",
         });
     }
 
-    public async login (parameters: GenericObject = {}): Promise<MidaPlaygroundBrokerAccount> {
+    public override async login (parameters: GenericObject = {}): Promise<MidaPlaygroundBrokerAccount> {
         return new MidaPlaygroundBrokerAccount({
             ...parameters as any,
             broker: this,
