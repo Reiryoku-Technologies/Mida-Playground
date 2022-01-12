@@ -10,7 +10,15 @@ export class MidaPlaygroundPlugin extends MidaPlugin {
     }
 
     public override install (actions: MidaPluginActions): void {
-        //actions.addBroker(new MidaPlaygroundBroker());
+        actions.addBroker(MidaPlaygroundPlugin.#broker);
+    }
+
+    /* *** *** *** Reiryoku Technologies *** *** *** */
+
+    static readonly #broker: MidaPlaygroundBroker = new MidaPlaygroundBroker();
+
+    public static get broker (): MidaPlaygroundBroker {
+        return MidaPlaygroundPlugin.#broker;
     }
 }
 
