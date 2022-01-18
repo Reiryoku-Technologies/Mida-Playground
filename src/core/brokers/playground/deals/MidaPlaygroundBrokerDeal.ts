@@ -23,7 +23,7 @@ export class MidaPlaygroundBrokerDeal extends MidaBrokerDeal {
         grossProfit,
         commission,
         swap,
-        rejection,
+        rejectionType,
         internalEmitter,
     }: MidaPlaygroundBrokerDealParameters) {
         super({
@@ -45,7 +45,7 @@ export class MidaPlaygroundBrokerDeal extends MidaBrokerDeal {
             grossProfit,
             commission,
             swap,
-            rejection,
+            rejectionType,
         });
 
         this.#internalEmitter = internalEmitter;

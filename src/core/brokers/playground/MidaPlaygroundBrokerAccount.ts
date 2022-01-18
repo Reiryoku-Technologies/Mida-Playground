@@ -53,11 +53,11 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
             broker,
             creationDate: new MidaDate(),
             ownerName,
-            depositCurrencyIso: "EUR",
+            depositCurrencyIso: "USD",
             depositCurrencyDigits: 2,
             operativity: MidaBrokerAccountOperativity.DEMO,
             positionAccounting: MidaBrokerAccountPositionAccounting.HEDGED,
-            indicativeLeverage: 30,
+            indicativeLeverage: 0,
         });
 
         this.#localDate = new MidaDate(localDate ?? 378687600000);
@@ -142,13 +142,13 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
     }
 
     public async getOrderSwaps (id: string): Promise<number> {
-        await this._assertOrderExists(id);
+        await this.#assertOrderExists(id);
 
         return 0;
     }
 
     public async getOrderCommission (id: string): Promise<number> {
-        await this._assertOrderExists(id);
+        await this.#assertOrderExists(id);
 
         return this.#fixedOrderCommission;
     }
@@ -158,7 +158,7 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
     }
 
     public async cancelPendingOrder (id: string): Promise<void> {
-        await this._assertOrderExists(id);
+        await this.#assertOrderExists(id);
 
         const order: MidaBrokerOrder = this.#orders.get(id) as MidaBrokerOrder;
 
@@ -211,7 +211,7 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
     }
 
     public async getOrderStopLoss (id: string): Promise<number | undefined> {
-        await this._assertOrderExists(id);
+        await this.#assertOrderExists(id);
 
         const order: MidaBrokerOrder | undefined = this.#orders.get(id);
 
@@ -223,7 +223,7 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
     }
 
     public setOrderStopLoss (id: string, stopLoss: number): void {
-        this._assertOrderExists(id);
+        this.#assertOrderExists(id);
 
         const order: MidaBrokerOrder = this.#orders.get(id) as MidaBrokerOrder;
 
@@ -234,7 +234,7 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
     }
 
     public async clearOrderStopLoss (id: string): Promise<void> {
-        await this._assertOrderExists(id);
+        await this.#assertOrderExists(id);
 
         const order: MidaBrokerOrder | undefined = this.#orders.get(id);
 
@@ -249,7 +249,7 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
     }
 
     public async getOrderTakeProfit (id: string): Promise<number | undefined> {
-        await this._assertOrderExists(id);
+        await this.#assertOrderExists(id);
 
         const order: MidaBrokerOrder | undefined = this.#orders.get(id);
 
@@ -261,7 +261,7 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
     }
 
     public async setOrderTakeProfit (id: string, takeProfit: number): Promise<void> {
-        await this._assertOrderExists(id);
+        await this.#assertOrderExists(id);
 
         const order: MidaBrokerOrder | undefined = this.#orders.get(id);
 
@@ -276,7 +276,7 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
     }
 
     public async clearOrderTakeProfit (id: string): Promise<void> {
-        await this._assertOrderExists(id);
+        await this.#assertOrderExists(id);
 
         const order: MidaBrokerOrder | undefined = this.#orders.get(id);
 
@@ -299,19 +299,19 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
     }
 
     public async isSymbolMarketOpen (symbol: string): Promise<boolean> {
-        this._assertSymbolExists(symbol);
+        this.#assertSymbolExists(symbol);
 
         throw new Error();
     }
 
     public override async getSymbolPeriods (symbol: string, timeframe: number): Promise<MidaSymbolPeriod[]> {
-        this._assertSymbolExists(symbol);
+        this.#assertSymbolExists(symbol);
 
         return [];
     }
 
     public override async getSymbolLastTick (symbol: string): Promise<MidaSymbolTick> {
-        await this._assertSymbolExists(symbol);
+        await this.#assertSymbolExists(symbol);
 
         return this.#lastTicks.get(symbol) as MidaSymbolTick;
     }
@@ -337,7 +337,7 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
     }
 
     public async watchSymbolTicks (symbol: string): Promise<void> {
-        await this._assertSymbolExists(symbol);
+        await this.#assertSymbolExists(symbol);
 
         this.#watchedSymbols.add(symbol);
     }
@@ -393,9 +393,6 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
 
     public async loadTicks (ticks: MidaSymbolTick[]): Promise<void> {
         const symbol: string = ticks[0].symbol;
-
-        this._assertSymbolExists(symbol);
-
         const localTicks: MidaSymbolTick[] = this.#localTicks.get(symbol) || [];
         const updatedTicks: MidaSymbolTick[] = localTicks.concat(ticks);
 
@@ -408,13 +405,13 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         return this.#localTicks.get(symbol);
     }
 
-    private _assertSymbolExists (symbol: string): void {
+    #assertSymbolExists (symbol: string): void {
         if (!this.#localSymbols.has(symbol)) {
             throw new Error();
         }
     }
 
-    private _assertOrderExists (id: string): void {
+    #assertOrderExists (id: string): void {
         if (!this.#orders.has(id)) {
             throw new Error();
         }
@@ -461,10 +458,6 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
     }
 
     async #onTick (tick: MidaSymbolTick): Promise<void> {
-        if (this.#watchedSymbols.has(tick.symbol)) {
-            this.notifyListeners("tick", { tick, });
-        }
-
         await this.#updatePendingOrders(tick);
         await this.#updateOpenPositions(tick);
 
@@ -475,6 +468,10 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
             this.notifyListeners("margin-call", { marginLevel, });
         }
         // </margin-call>
+
+        if (this.#watchedSymbols.has(tick.symbol)) {
+            this.notifyListeners("tick", { tick, });
+        }
     }
 
     // tslint:disable-next-line:cyclomatic-complexity

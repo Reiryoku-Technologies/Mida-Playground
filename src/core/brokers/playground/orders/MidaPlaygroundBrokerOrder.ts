@@ -14,7 +14,7 @@ import {MidaPlaygroundBrokerDeal} from "#brokers/playground/deals/MidaPlayground
 import {MidaPlaygroundBrokerAccount} from "#brokers/playground/MidaPlaygroundBrokerAccount";
 
 export class MidaPlaygroundBrokerOrder extends MidaBrokerOrder {
-    readonly #internalEmitter: MidaEmitter;
+    readonly #brokerEmitter: MidaEmitter;
 
     public constructor ({
         id,
@@ -31,7 +31,7 @@ export class MidaPlaygroundBrokerOrder extends MidaBrokerOrder {
         deals,
         timeInForce,
         isStopOut,
-        internalEmitter,
+        brokerEmitter,
     }: MidaPlaygroundBrokerOrderParameters) {
         super({
             id,
@@ -50,7 +50,7 @@ export class MidaPlaygroundBrokerOrder extends MidaBrokerOrder {
             isStopOut,
         });
 
-        this.#internalEmitter = internalEmitter;
+        this.#brokerEmitter = brokerEmitter;
     }
 
     get #playgroundBrokerAccount (): MidaPlaygroundBrokerAccount {
@@ -67,13 +67,11 @@ export class MidaPlaygroundBrokerOrder extends MidaBrokerOrder {
             executionPrice,
         } = event.descriptor;
 
-        if (this.status !== MidaBrokerOrderStatus.PENDING) {
-            this.lastUpdateDate = executionDate.clone();
+        this.lastUpdateDate = executionDate.clone();
 
+        if (this.status !== MidaBrokerOrderStatus.PENDING) {
             this.onStatusChange(MidaBrokerOrderStatus.ACCEPTED);
         }
-
-        this.lastUpdateDate = executionDate.clone();
 
         this.onDeal(new MidaPlaygroundBrokerDeal({
             id: MidaUtilities.generateUuid(),
@@ -94,27 +92,25 @@ export class MidaPlaygroundBrokerOrder extends MidaBrokerOrder {
             grossProfit: 0,
             commission: 0,
             swap: 0,
-            rejection: undefined,
-            internalEmitter: this.#internalEmitter,
+            rejectionType: undefined,
+            internalEmitter: this.#brokerEmitter,
         }));
         this.onStatusChange(MidaBrokerOrderStatus.FILLED);
     }
 
     #onCancel (event: MidaEvent): void {
-        const { cancelDate, } = event.descriptor;
-
-        this.lastUpdateDate = cancelDate.clone();
+        this.lastUpdateDate = event.descriptor.cancelDate.clone();
         this.onStatusChange(MidaBrokerOrderStatus.CANCELLED);
     }
 
     #configureListeners () {
-        this.#internalEmitter.on("order-execute", (event: MidaEvent): void => {
+        this.#brokerEmitter.on("order-execute", (event: MidaEvent): void => {
             if (event.descriptor.orderId === this.id) {
                 this.#onExecution(event);
             }
         });
 
-        this.#internalEmitter.on("order-cancel", (event: MidaEvent): void => {
+        this.#brokerEmitter.on("order-cancel", (event: MidaEvent): void => {
             if (event.descriptor.orderId === this.id) {
                 this.#onCancel(event);
             }
