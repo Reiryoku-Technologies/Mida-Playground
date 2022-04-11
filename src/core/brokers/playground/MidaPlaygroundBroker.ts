@@ -8,7 +8,6 @@ export class MidaPlaygroundBroker extends MidaBroker {
     public constructor () {
         super({
             name: "Mida Playground",
-            legalName: "Mida Playground",
             websiteUri: "https://github.com/Reiryoku-Technologies/Mida-Playground",
         });
     }

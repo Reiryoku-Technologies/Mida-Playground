@@ -1,5 +1,5 @@
-import {MidaBrokerDeal, MidaEmitter} from "@reiryoku/mida";
-import {MidaPlaygroundBrokerDealParameters} from "#brokers/playground/deals/MidaPlaygroundBrokerDealParameters";
+import { MidaBrokerDeal, MidaEmitter } from "@reiryoku/mida";
+import { MidaPlaygroundBrokerDealParameters } from "#brokers/playground/deals/MidaPlaygroundBrokerDealParameters";
 
 export class MidaPlaygroundBrokerDeal extends MidaBrokerDeal {
     readonly #internalEmitter: MidaEmitter;
@@ -8,9 +8,6 @@ export class MidaPlaygroundBrokerDeal extends MidaBrokerDeal {
         id,
         order,
         position,
-        symbol,
-        requestedVolume,
-        filledVolume,
         direction,
         status,
         purpose,
@@ -30,9 +27,6 @@ export class MidaPlaygroundBrokerDeal extends MidaBrokerDeal {
             id,
             order,
             position,
-            symbol,
-            requestedVolume,
-            filledVolume,
             direction,
             status,
             purpose,

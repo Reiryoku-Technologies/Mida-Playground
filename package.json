@@ -1,7 +1,7 @@
 {
     "name": "@reiryoku/mida-playground",
     "version": "1.0.0",
-    "description": "A Mida plugin to practice and backtest operations in global financial markets.",
+    "description": "A Mida plugin for backtesting and paper trading in global financial markets",
     "license": "MIT",
     "homepage": "https://github.com/Reiryoku-Technologies/Mida-Playground",
     "bugs": {
@@ -47,6 +47,6 @@
         "@reiryoku/eslint-config-reiryoku": "^1.0.0"
     },
     "peerDependencies": {
-        "@reiryoku/mida": "^2.0.0"
+        "@reiryoku/mida": "^5.0.1"
     }
 }

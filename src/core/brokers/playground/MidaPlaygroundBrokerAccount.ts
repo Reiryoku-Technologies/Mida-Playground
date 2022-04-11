@@ -351,8 +351,8 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
     }
 
     /**
-     * Used to elapse a given amount of time, elapsing time will trigger respective market ticks.
-     * @param quantity Amount of time to elapse in seconds.
+     * Used to elapse a given amount of time (used to trigger market ticks)
+     * @param quantity Amount of time to elapse in seconds
      */
     public async elapseTime (quantity: number): Promise<MidaSymbolTick[]> {
         const previousDate: MidaDate = this.#localDate;
@@ -360,7 +360,7 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         const elapsedTicks: MidaSymbolTick[] = [];
 
         for (const symbol of this.#localSymbols.keys()) {
-            const ticks: MidaSymbolTick[] = this.#localTicks.get(symbol) || [];
+            const ticks: MidaSymbolTick[] = this.#localTicks.get(symbol) ?? [];
 
             for (const tick of ticks) {
                 if (tick.date.timestamp > previousDate.timestamp && tick.date.timestamp <= actualDate.timestamp) {
@@ -383,20 +383,20 @@ export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
         return elapsedTicks;
     }
 
-    public deposit (amount: number): void {
-        this.#balance += amount;
+    public deposit (quantity: number): void {
+        this.#balance += quantity;
     }
 
-    public withdraw (amount: number): void {
-        this.#balance = Math.max(0, this.#balance - amount);
+    public withdraw (quantity: number): void {
+        this.#balance = Math.max(0, this.#balance - quantity);
     }
 
-    public async loadTicks (ticks: MidaSymbolTick[]): Promise<void> {
+    public loadTicks (ticks: MidaSymbolTick[]): void {
         const symbol: string = ticks[0].symbol;
         const localTicks: MidaSymbolTick[] = this.#localTicks.get(symbol) || [];
         const updatedTicks: MidaSymbolTick[] = localTicks.concat(ticks);
 
-        updatedTicks.sort((a: MidaSymbolTick, b: MidaSymbolTick): number => a.date.valueOf() - b.date.valueOf());
+        updatedTicks.sort((a: MidaSymbolTick, b: MidaSymbolTick): number => a.date.timestamp - b.date.timestamp);
 
         this.#localTicks.set(symbol, updatedTicks);
     }
