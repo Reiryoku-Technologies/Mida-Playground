@@ -58,7 +58,11 @@ export class MidaPlaygroundBrokerOrder extends MidaBrokerOrder {
     }
 
     public override async cancel (): Promise<void> {
-        await this.#playgroundBrokerAccount.cancelPendingOrder(this.id as string);
+        if (this.status !== MidaBrokerOrderStatus.PENDING || !this.id) {
+            return;
+        }
+
+        await this.#playgroundBrokerAccount.cancelPendingOrder(this.id);
     }
 
     #onExecution (event: MidaEvent): void {
