@@ -19,7 +19,7 @@ import {
 import {MidaPlaygroundBrokerAccountParameters} from "#brokers/playground/MidaPlaygroundBrokerAccountParameters";
 
 // @ts-ignore
-export class MidaPlaygroundBrokerAccount extends MidaBrokerAccount {
+export class PlaygroundAccount extends MidaBrokerAccount {
     #localDate: MidaDate;
     #balance: number;
     readonly #orders: Map<string, MidaBrokerOrder>;
