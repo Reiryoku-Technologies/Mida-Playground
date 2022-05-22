@@ -12,7 +12,7 @@ export class Playground extends MidaTradingPlatform {
     public override async login (parameters: GenericObject = {}): Promise<PlaygroundAccount> {
         return new PlaygroundAccount({
             ...parameters as any,
-            broker: this,
+            platform: this,
         });
     }
 }

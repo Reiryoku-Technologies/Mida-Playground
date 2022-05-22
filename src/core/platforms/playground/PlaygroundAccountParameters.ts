@@ -1,9 +1,9 @@
-import { MidaBroker, MidaDate } from "@reiryoku/mida";
+import { MidaTradingPlatform, MidaDate } from "@reiryoku/mida";
 
 export type PlaygroundAccountParameters = {
     id: string;
     ownerName: string;
-    broker: MidaBroker;
+    platform: MidaTradingPlatform;
     localDate?: MidaDate;
     depositCurrencyIso?: string;
     balance?: number;
