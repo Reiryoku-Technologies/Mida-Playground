@@ -1,5 +1,6 @@
 import {
-    MidaAsset, MidaAssetStatement,
+    MidaAsset,
+    MidaAssetStatement,
     MidaDate,
     MidaEmitter,
     MidaEventListener,
@@ -12,9 +13,12 @@ import {
     MidaPeriod,
     MidaPosition,
     MidaPositionDirection,
-    MidaPositionStatus,
     MidaSymbol,
-    MidaTick, MidaTrade, MidaTradeDirection, MidaTradePurpose, MidaTradeStatus,
+    MidaTick,
+    MidaTrade,
+    MidaTradeDirection,
+    MidaTradePurpose,
+    MidaTradeStatus,
     MidaTradingAccount,
     MidaTradingAccountOperativity,
     MidaTradingAccountPositionAccounting,
@@ -23,6 +27,7 @@ import {
 import {PlaygroundTrade} from "#platforms/playground/trades/PlaygroundTrade";
 import {PlaygroundAccountParameters} from "#platforms/playground/PlaygroundAccountParameters";
 import {PlaygroundOrder} from "#platforms/playground/orders/PlaygroundOrder";
+import {PlaygroundPosition} from "#platforms/playground/positions/PlaygroundPosition";
 
 export class PlaygroundAccount extends MidaTradingAccount {
     #localDate: MidaDate;
@@ -38,6 +43,7 @@ export class PlaygroundAccount extends MidaTradingAccount {
     readonly #lastTicks: Map<string, MidaTick>;
     readonly #localPeriods: Map<string, MidaPeriod[]>;
     readonly #lastPeriods: Map<string, MidaPeriod>;
+    readonly #positions: Map<string, PlaygroundPosition>;
     readonly #assets: Map<string, MidaAsset>;
     readonly #watchedSymbols: Set<string>;
     readonly #internalEmitter: MidaEmitter;
@@ -77,6 +83,7 @@ export class PlaygroundAccount extends MidaTradingAccount {
         this.#lastTicks = new Map();
         this.#localPeriods = new Map();
         this.#lastPeriods = new Map();
+        this.#positions = new Map();
         this.#watchedSymbols = new Set();
         this.#assets = new Map();
         this.#internalEmitter = new MidaEmitter();
@@ -238,6 +245,7 @@ export class PlaygroundAccount extends MidaTradingAccount {
             status: MidaOrderStatus.REQUESTED,
             creationDate: new MidaDate(),
             lastUpdateDate: undefined,
+            positionId,
             trades: [],
             timeInForce: directives.timeInForce ?? MidaOrderTimeInForce.GOOD_TILL_CANCEL,
             isStopOut: false,
@@ -460,6 +468,27 @@ export class PlaygroundAccount extends MidaTradingAccount {
             throw new Error();
         }
 
+        let position: PlaygroundPosition;
+
+        if (!order.positionId) {
+            position = new PlaygroundPosition({
+                id: MidaUtilities.uuid(),
+                symbol: order.symbol,
+                volume: order.requestedVolume,
+                direction: order.direction === MidaOrderDirection.BUY ? MidaPositionDirection.LONG : MidaPositionDirection.SHORT,
+                protection: {},
+                tradingAccount: this,
+                internalEmitter: this.#internalEmitter,
+            });
+
+            this.#positions.set(position.id, position);
+        }
+        else {
+            position = this.#getPositionById(order.positionId) as PlaygroundPosition;
+        }
+
+        const purpose: MidaTradePurpose = order.purpose === MidaOrderPurpose.OPEN ? MidaTradePurpose.OPEN : MidaTradePurpose.CLOSE;
+
         const trade: PlaygroundTrade = new PlaygroundTrade({
             id: MidaUtilities.uuid(),
             orderId: this.id,
@@ -467,7 +496,7 @@ export class PlaygroundAccount extends MidaTradingAccount {
             volume: order.requestedVolume,
             direction: order.direction === MidaOrderDirection.BUY ? MidaTradeDirection.BUY : MidaTradeDirection.SELL,
             status: MidaTradeStatus.EXECUTED,
-            purpose: order.purpose === MidaOrderPurpose.OPEN ? MidaTradePurpose.OPEN : MidaTradePurpose.CLOSE,
+            purpose,
             executionDate: this.#localDate.clone(),
             executionPrice,
             grossProfit: 0,
@@ -475,14 +504,18 @@ export class PlaygroundAccount extends MidaTradingAccount {
             swap: 0,
             commissionAsset: this.primaryAsset,
             grossProfitAsset: this.primaryAsset,
-            positionId: order.positionId,
+            positionId: position.id,
             swapAsset: this.primaryAsset,
             tradingAccount: this,
         });
 
         this.#trades.set(trade.id, trade);
 
-        this.notifyListeners("order-execute", { trade, });
+        this.notifyListeners("trade", { trade, });
+    }
+
+    #getPositionById (id: string): MidaPosition | undefined {
+        return this.#positions.get(id);
     }
 
     async #onTick (tick: MidaTick): Promise<void> {

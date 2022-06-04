@@ -30,6 +30,8 @@ export class PlaygroundPosition extends MidaPosition {
         });
 
         this.#internalEmitter = internalEmitter;
+
+        this.#configureListeners();
     }
 
     public override async getUsedMargin (): Promise<number> {
@@ -82,5 +84,15 @@ export class PlaygroundPosition extends MidaPosition {
 
     public override async changeProtection (protection: MidaProtection): Promise<MidaProtectionChange> {
         throw new MidaUnsupportedOperationError();
+    }
+
+    #configureListeners () {
+        this.#internalEmitter.on("trade", (event) => {
+            const { trade, } = event.descriptor;
+
+            if (trade.positionId === this.id) {
+                this.onTradeExecute(trade);
+            }
+        });
     }
 }

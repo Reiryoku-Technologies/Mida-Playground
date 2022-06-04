@@ -76,6 +76,7 @@ export class PlaygroundOrder extends MidaOrder {
     #execute (event: MidaEvent): void {
         const { trade, } = event.descriptor;
         this.lastUpdateDate = trade.executionDate.clone();
+        this.positionId = trade.positionId;
 
         this.onTrade(trade);
         this.onStatusChange(MidaOrderStatus.EXECUTED);
@@ -87,7 +88,7 @@ export class PlaygroundOrder extends MidaOrder {
     }
 
     #configureListeners () {
-        this.#internalEmitter.on("order-execute", (event: MidaEvent): void => {
+        this.#internalEmitter.on("trade", (event: MidaEvent): void => {
             if (event.descriptor.orderId === this.id) {
                 this.#execute(event);
             }
