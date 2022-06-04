@@ -1,12 +1,11 @@
 import {
-    MidaOrder,
-    MidaOrderStatus,
+    MidaDate,
     MidaEmitter,
     MidaEvent,
-    MidaUtilities, MidaTradeDirection, MidaTradeStatus, MidaTradePurpose
+    MidaOrder,
+    MidaOrderStatus,
 } from "@reiryoku/mida";
 import {PlaygroundOrderParameters} from "#platforms/playground/orders/PlaygroundOrderParameters";
-import {PlaygroundTrade} from "#platforms/playground/trades/PlaygroundTrade";
 import {PlaygroundAccount} from "#platforms/playground/PlaygroundAccount";
 
 
@@ -48,6 +47,18 @@ export class PlaygroundOrder extends MidaOrder {
         });
 
         this.#internalEmitter = internalEmitter;
+
+        if (status === MidaOrderStatus.REQUESTED) {
+            this.lastUpdateDate = new MidaDate();
+
+            this.onStatusChange(MidaOrderStatus.ACCEPTED);
+
+            if (Number.isFinite(limitPrice) || Number.isFinite(stopPrice)) {
+                this.lastUpdateDate = new MidaDate();
+
+                this.onStatusChange(MidaOrderStatus.PENDING);
+            }
+        }
     }
 
     get #playgroundAccount (): PlaygroundAccount {
@@ -55,7 +66,7 @@ export class PlaygroundOrder extends MidaOrder {
     }
 
     public override async cancel (): Promise<void> {
-        if (this.status !== MidaOrderStatus.PENDING || !this.id) {
+        if (this.status !== MidaOrderStatus.PENDING) {
             return;
         }
 
@@ -63,36 +74,10 @@ export class PlaygroundOrder extends MidaOrder {
     }
 
     #execute (event: MidaEvent): void {
-        const {
-            executionDate,
-            executionPrice,
-        } = event.descriptor;
+        const { trade, } = event.descriptor;
+        this.lastUpdateDate = trade.executionDate.clone();
 
-        this.lastUpdateDate = executionDate.clone();
-
-        if (this.status !== MidaOrderStatus.PENDING) {
-            this.onStatusChange(MidaOrderStatus.ACCEPTED);
-        }
-
-        this.onTrade(new PlaygroundTrade({
-            id: MidaUtilities.uuid(),
-            orderId: this.id,
-            symbol: this.symbol,
-            volume: this.requestedVolume,
-            direction: MidaTradeDirection.BUY,
-            status: MidaTradeStatus.EXECUTED,
-            purpose: MidaTradePurpose.OPEN,
-            executionDate: executionDate.clone(),
-            executionPrice,
-            grossProfit: 0,
-            commission: 0,
-            swap: 0,
-            commissionAsset: "USD",
-            grossProfitAsset: "USD",
-            positionId: "",
-            swapAsset: "USD",
-            tradingAccount: this.tradingAccount,
-        }));
+        this.onTrade(trade);
         this.onStatusChange(MidaOrderStatus.EXECUTED);
     }
 

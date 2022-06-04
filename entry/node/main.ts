@@ -1,1 +1,1 @@
-export * from "#PlaygroundPlugin";
+export * from "!/src/core/PlaygroundPlugin";

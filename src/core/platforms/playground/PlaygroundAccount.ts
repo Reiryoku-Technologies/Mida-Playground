@@ -1,28 +1,33 @@
 import {
-    MidaAsset,
+    MidaAsset, MidaAssetStatement,
     MidaDate,
     MidaEmitter,
+    MidaEventListener,
     MidaOrder,
     MidaOrderDirection,
     MidaOrderDirectives,
+    MidaOrderPurpose,
     MidaOrderStatus,
+    MidaOrderTimeInForce,
     MidaPeriod,
     MidaPosition,
     MidaPositionDirection,
     MidaPositionStatus,
     MidaSymbol,
-    MidaTick,
+    MidaTick, MidaTrade, MidaTradeDirection, MidaTradePurpose, MidaTradeStatus,
     MidaTradingAccount,
     MidaTradingAccountOperativity,
     MidaTradingAccountPositionAccounting,
+    MidaUtilities,
 } from "@reiryoku/mida";
 import {PlaygroundTrade} from "#platforms/playground/trades/PlaygroundTrade";
 import {PlaygroundAccountParameters} from "#platforms/playground/PlaygroundAccountParameters";
+import {PlaygroundOrder} from "#platforms/playground/orders/PlaygroundOrder";
 
 export class PlaygroundAccount extends MidaTradingAccount {
     #localDate: MidaDate;
     #balance: number;
-    readonly #orders: Map<string, MidaOrder>;
+    readonly #orders: Map<string, PlaygroundOrder>;
     readonly #trades: Map<string, PlaygroundTrade>;
     #negativeBalanceProtection: boolean;
     #fixedOrderCommission: number;
@@ -34,8 +39,6 @@ export class PlaygroundAccount extends MidaTradingAccount {
     readonly #localPeriods: Map<string, MidaPeriod[]>;
     readonly #lastPeriods: Map<string, MidaPeriod>;
     readonly #assets: Map<string, MidaAsset>;
-    readonly #positions: Map<string, MidaPosition>;
-    readonly #ownedAssets: Map<string, number>;
     readonly #watchedSymbols: Set<string>;
     readonly #internalEmitter: MidaEmitter;
 
@@ -76,8 +79,6 @@ export class PlaygroundAccount extends MidaTradingAccount {
         this.#lastPeriods = new Map();
         this.#watchedSymbols = new Set();
         this.#assets = new Map();
-        this.#positions = new Map();
-        this.#ownedAssets = new Map();
         this.#internalEmitter = new MidaEmitter();
     }
 
@@ -130,8 +131,16 @@ export class PlaygroundAccount extends MidaTradingAccount {
         return this.#balance;
     }
 
+    public override async getBalanceSheet (): Promise<MidaAssetStatement[]> {
+        return [];
+    }
+
     public override async getAsset (asset: string): Promise<MidaAsset | undefined> {
         return this.#assets.get(asset);
+    }
+
+    public override async getAssetBalance (asset: string): Promise<MidaAssetStatement> {
+        return {} as MidaAssetStatement;
     }
 
     public override async getAssets (): Promise<string[]> {
@@ -139,7 +148,7 @@ export class PlaygroundAccount extends MidaTradingAccount {
     }
 
     public override async getEquity (): Promise<number> {
-        return 0;
+        return this.getBalance();
     }
 
     public async getUsedMargin (): Promise<number> {
@@ -147,11 +156,11 @@ export class PlaygroundAccount extends MidaTradingAccount {
     }
 
     public override async getOrders (symbol: string): Promise<MidaOrder[]> {
-        return [ ...this.#orders.values(), ];
+        return [ ...this.#orders.values(), ].filter((order: MidaOrder) => order.symbol === symbol);
     }
 
-    public override async getPendingOrders (): Promise<MidaOrder[]> {
-        const pendingOrders: MidaOrder[] = [];
+    public override async getPendingOrders (): Promise<PlaygroundOrder[]> {
+        const pendingOrders: PlaygroundOrder[] = [];
 
         for (const order of [ ...this.#orders.values(), ]) {
             if (order.status === MidaOrderStatus.PENDING) {
@@ -162,20 +171,118 @@ export class PlaygroundAccount extends MidaTradingAccount {
         return pendingOrders;
     }
 
-    public async getOrderSwaps (id: string): Promise<number> {
-        await this.#assertOrderExists(id);
-
-        return 0;
+    public override async getTrades (symbol: string): Promise<MidaTrade[]> {
+        return [ ...this.#trades.values(), ].filter((trade: MidaTrade) => trade.symbol === symbol);
     }
 
-    public async getOrderCommission (id: string): Promise<number> {
-        await this.#assertOrderExists(id);
+    public override async getOpenPositions (): Promise<MidaPosition[]> {
+        return [];
+    }
 
-        return this.#fixedOrderCommission;
+    public async getOpenPositionById (id: string): Promise<MidaPosition | undefined> {
+        const openPositions: MidaPosition[] = await this.getOpenPositions();
+
+        for (const position of openPositions) {
+            if (position.id === id) {
+                return position;
+            }
+        }
+
+        return undefined;
     }
 
     public override async placeOrder (directives: MidaOrderDirectives): Promise<MidaOrder> {
-        throw new Error();
+        const positionId: string | undefined = directives.positionId;
+        let symbol: string;
+        let purpose: MidaOrderPurpose;
+
+        if (positionId) {
+            const position: MidaPosition | undefined = await this.getOpenPositionById(positionId);
+
+            if (!position) {
+                throw new Error("Position not found");
+            }
+
+            symbol = position.symbol;
+
+            if (
+                (directives.direction === MidaOrderDirection.BUY && position.direction === MidaPositionDirection.LONG) ||
+                (directives.direction === MidaOrderDirection.SELL && position.direction === MidaPositionDirection.SHORT)
+            ) {
+                purpose = MidaOrderPurpose.OPEN;
+            }
+            else {
+                purpose = MidaOrderPurpose.CLOSE;
+            }
+        }
+        else {
+            symbol = directives.symbol as string;
+
+            if (directives.direction === MidaOrderDirection.BUY) {
+                purpose = MidaOrderPurpose.OPEN;
+            }
+            else {
+                purpose = MidaOrderPurpose.CLOSE;
+            }
+        }
+
+        const order: PlaygroundOrder = new PlaygroundOrder({
+            id: MidaUtilities.uuid(),
+            tradingAccount: this,
+            symbol,
+            requestedVolume: directives.volume,
+            direction: directives.direction,
+            purpose,
+            limitPrice: directives.limit,
+            stopPrice: directives.stop,
+            status: MidaOrderStatus.REQUESTED,
+            creationDate: new MidaDate(),
+            lastUpdateDate: undefined,
+            trades: [],
+            timeInForce: directives.timeInForce ?? MidaOrderTimeInForce.GOOD_TILL_CANCEL,
+            isStopOut: false,
+            internalEmitter: this.#internalEmitter,
+        });
+
+        this.#orders.set(order.id, order);
+
+        const resolverEvents: string[] = directives.resolverEvents ?? [
+            "reject",
+            "pending",
+            "cancel",
+            "expire",
+            "execute",
+        ];
+        const resolver: Promise<PlaygroundOrder> = new Promise((resolve: (order: PlaygroundOrder) => void) => {
+            if (resolverEvents.length === 0) {
+                resolve(order);
+            }
+            else {
+                const resolverEventsUuids: Map<string, string> = new Map();
+
+                for (const eventType of resolverEvents) {
+                    resolverEventsUuids.set(eventType, order.on(eventType, (): void => {
+                        for (const uuid of [ ...resolverEventsUuids.values(), ]) {
+                            order.removeEventListener(uuid);
+                        }
+
+                        resolve(order);
+                    }));
+                }
+            }
+        });
+
+        const listeners: { [eventType: string]: MidaEventListener } = directives.listeners ?? {};
+
+        for (const eventType of Object.keys(listeners)) {
+            order.on(eventType, listeners[eventType]);
+        }
+
+        if (!Number.isFinite(order.limitPrice) && !Number.isFinite(order.stopPrice)) {
+            await this.#executeOrder(order);
+        }
+
+        return resolver;
     }
 
     public override async getCryptoAssetDepositAddress (asset: string, net: string): Promise<string> {
@@ -194,101 +301,6 @@ export class PlaygroundAccount extends MidaTradingAccount {
         this.#internalEmitter.notifyListeners("order-cancel", {
             orderId: order.id,
             cancelDate: this.#localDate.clone(),
-        });
-    }
-
-    public async closePosition (id: string): Promise<void> {
-        const position: MidaPosition = this.#positions.get(id) as MidaPosition;
-
-        if (position.status !== MidaPositionStatus.OPEN) {
-            throw new Error();
-        }
-
-        let closePrice: number | undefined;
-
-        switch (position.direction) {
-            case MidaPositionDirection.SHORT: {
-                closePrice = await this.getSymbolAsk(position.symbol);
-
-                break;
-            }
-            case MidaPositionDirection.LONG: {
-                closePrice = await this.getSymbolBid(position.symbol);
-
-                break;
-            }
-            default: {
-                throw new Error();
-            }
-        }
-
-        if (!Number.isFinite(closePrice)) {
-            throw new Error();
-        }
-
-        this.#balance += await position.getUnrealizedGrossProfit();
-
-        this.#internalEmitter.notifyListeners("position-close", {
-            positionId: position.id,
-            closeDate: this.#localDate.clone(),
-            closePrice,
-        });
-    }
-
-    public async clearOrderStopLoss (id: string): Promise<void> {
-        await this.#assertOrderExists(id);
-
-        const order: MidaOrder | undefined = this.#orders.get(id);
-
-        if (!order) {
-            throw new Error();
-        }
-
-        this.notifyListeners("order-directives", {
-            id: order.id,
-            stopLoss: undefined,
-        });
-    }
-
-    public async getOrderTakeProfit (id: string): Promise<number | undefined> {
-        await this.#assertOrderExists(id);
-
-        const order: MidaOrder | undefined = this.#orders.get(id);
-
-        if (!order) {
-            throw new Error();
-        }
-
-        return 0;
-    }
-
-    public async setOrderTakeProfit (id: string, takeProfit: number): Promise<void> {
-        await this.#assertOrderExists(id);
-
-        const order: MidaOrder | undefined = this.#orders.get(id);
-
-        if (!order) {
-            throw new Error();
-        }
-
-        this.notifyListeners("order-directives", {
-            id: order.id,
-            takeProfit,
-        });
-    }
-
-    public async clearOrderTakeProfit (id: string): Promise<void> {
-        await this.#assertOrderExists(id);
-
-        const order: MidaOrder | undefined = this.#orders.get(id);
-
-        if (!order) {
-            throw new Error();
-        }
-
-        this.notifyListeners("order-directives", {
-            id: order.id,
-            takeProfit: undefined,
         });
     }
 
@@ -425,17 +437,7 @@ export class PlaygroundAccount extends MidaTradingAccount {
         }
     }
 
-    async #executePendingOrder (id: string): Promise<void> {
-        const order: MidaOrder | undefined = this.#orders.get(id);
-
-        if (!order) {
-            throw new Error();
-        }
-
-        if (order.status !== MidaOrderStatus.PENDING) {
-            throw new Error();
-        }
-
+    async #executeOrder (order: MidaOrder): Promise<void> {
         let executionPrice: number | undefined;
 
         switch (order.direction) {
@@ -458,11 +460,29 @@ export class PlaygroundAccount extends MidaTradingAccount {
             throw new Error();
         }
 
-        this.notifyListeners("order-execute", {
-            orderId: order.id,
+        const trade: PlaygroundTrade = new PlaygroundTrade({
+            id: MidaUtilities.uuid(),
+            orderId: this.id,
+            symbol: order.symbol,
+            volume: order.requestedVolume,
+            direction: order.direction === MidaOrderDirection.BUY ? MidaTradeDirection.BUY : MidaTradeDirection.SELL,
+            status: MidaTradeStatus.EXECUTED,
+            purpose: order.purpose === MidaOrderPurpose.OPEN ? MidaTradePurpose.OPEN : MidaTradePurpose.CLOSE,
             executionDate: this.#localDate.clone(),
             executionPrice,
+            grossProfit: 0,
+            commission: 0,
+            swap: 0,
+            commissionAsset: this.primaryAsset,
+            grossProfitAsset: this.primaryAsset,
+            positionId: order.positionId,
+            swapAsset: this.primaryAsset,
+            tradingAccount: this,
         });
+
+        this.#trades.set(trade.id, trade);
+
+        this.notifyListeners("order-execute", { trade, });
     }
 
     async #onTick (tick: MidaTick): Promise<void> {
@@ -498,7 +518,7 @@ export class PlaygroundAccount extends MidaTradingAccount {
                     (order.direction === MidaOrderDirection.SELL && tick.bid >= limitPrice)
                     || (order.direction === MidaOrderDirection.BUY && tick.ask <= limitPrice)
                 ) {
-                    await this.#executePendingOrder(order.id as string);
+                    await this.#executeOrder(order);
                 }
             }
             // </limit>
@@ -509,7 +529,7 @@ export class PlaygroundAccount extends MidaTradingAccount {
                     (order.direction === MidaOrderDirection.SELL && tick.bid <= stopPrice)
                     || (order.direction === MidaOrderDirection.BUY && tick.ask >= stopPrice)
                 ) {
-                    await this.#executePendingOrder(order.id as string);
+                    await this.#executeOrder(order);
                 }
             }
             // </stop>
@@ -548,6 +568,7 @@ export class PlaygroundAccount extends MidaTradingAccount {
             }
             // </take-profit>
 
+            /*
             // <stop-out>
             const marginLevel: number = await this.getMarginLevel();
 
@@ -568,6 +589,7 @@ export class PlaygroundAccount extends MidaTradingAccount {
                 await position.close();
             }
             // </negative-balance-protection>
+            */
         }
     }
 }
