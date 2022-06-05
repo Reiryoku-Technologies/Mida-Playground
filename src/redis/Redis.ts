@@ -16,6 +16,4 @@ export const loadTicks = async (ticks: MidaTick[]): Promise<void> => {
     await chain.exec();
 };
 
-export const getTicks = async (fromTimestamp: number, toTimestamp: number): Promise<MidaTick[]> => {
-    return [];
-}
+export const getTicks = async (fromTimestamp: number, toTimestamp: number): Promise<MidaTick[]> => [];

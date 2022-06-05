@@ -5,31 +5,26 @@
         "incremental": true,
         "inlineSources": true,
         "module": "commonjs",
+        "noImplicitReturns": true,
+        "noImplicitOverride": true,
         "outDir": "build",
         "paths": {
-            "!/*": [
-                "./*"
-            ],
-            "#*": [
-                "./src/core/*"
-            ]
+            "!/*": [ "./*" ],
+            "#*": [ "./src/core/*" ]
         },
         "removeComments": true,
         "sourceMap": true,
         "strict": true,
-        "target": "es6",
+        "target": "es2020",
         "plugins": [
-            {
-                "transform": "typescript-transform-paths"
-            },
-            {
-                "transform": "typescript-transform-paths",
-                "afterDeclarations": true
-            }
+            { "transform": "typescript-transform-paths" },
+            { "transform": "typescript-transform-paths", "afterDeclarations": true }
         ]
     },
-    "exclude": [
-        "build",
-        "node_modules"
-    ]
+    "include": [
+        ".eslintrc.js",
+        "jest.config.js",
+        "**/*.ts"
+    ],
+    "exclude": [ "build", "node_modules" ]
 }

@@ -5,8 +5,8 @@ import {
     MidaOrder,
     MidaOrderStatus,
 } from "@reiryoku/mida";
-import {PlaygroundOrderParameters} from "#platforms/playground/orders/PlaygroundOrderParameters";
-import {PlaygroundAccount} from "#platforms/playground/PlaygroundAccount";
+import {PlaygroundOrderParameters, } from "#platforms/playground/orders/PlaygroundOrderParameters";
+import {PlaygroundAccount, } from "#platforms/playground/PlaygroundAccount";
 
 
 export class PlaygroundOrder extends MidaOrder {
@@ -25,6 +25,7 @@ export class PlaygroundOrder extends MidaOrder {
         creationDate,
         lastUpdateDate,
         trades,
+        positionId,
         timeInForce,
         isStopOut,
         internalEmitter,
@@ -42,6 +43,7 @@ export class PlaygroundOrder extends MidaOrder {
             creationDate,
             lastUpdateDate,
             trades,
+            positionId,
             timeInForce,
             isStopOut,
         });
@@ -59,6 +61,8 @@ export class PlaygroundOrder extends MidaOrder {
                 this.onStatusChange(MidaOrderStatus.PENDING);
             }
         }
+
+        this.#configureListeners();
     }
 
     get #playgroundAccount (): PlaygroundAccount {
@@ -89,7 +93,7 @@ export class PlaygroundOrder extends MidaOrder {
 
     #configureListeners () {
         this.#internalEmitter.on("trade", (event: MidaEvent): void => {
-            if (event.descriptor.orderId === this.id) {
+            if (event.descriptor.trade.orderId === this.id) {
                 this.#execute(event);
             }
         });

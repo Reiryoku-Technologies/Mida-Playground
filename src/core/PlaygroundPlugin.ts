@@ -9,7 +9,7 @@ class PlaygroundPlugin extends MidaPlugin {
         super({
             id: pluginId,
             name: "Mida Playground",
-            description: "A Mida plugin for backtesting and paper trading in global financial markets",
+            description: "A Mida plugin for backtesting and paper trading",
             version: pluginVersion,
         });
     }

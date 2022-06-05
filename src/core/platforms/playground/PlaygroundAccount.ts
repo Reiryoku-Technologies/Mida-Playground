@@ -13,6 +13,7 @@ import {
     MidaPeriod,
     MidaPosition,
     MidaPositionDirection,
+    MidaPositionStatus,
     MidaSymbol,
     MidaTick,
     MidaTrade,
@@ -24,10 +25,10 @@ import {
     MidaTradingAccountPositionAccounting,
     MidaUtilities,
 } from "@reiryoku/mida";
-import {PlaygroundTrade} from "#platforms/playground/trades/PlaygroundTrade";
-import {PlaygroundAccountParameters} from "#platforms/playground/PlaygroundAccountParameters";
-import {PlaygroundOrder} from "#platforms/playground/orders/PlaygroundOrder";
-import {PlaygroundPosition} from "#platforms/playground/positions/PlaygroundPosition";
+import {PlaygroundTrade,} from "#platforms/playground/trades/PlaygroundTrade";
+import {PlaygroundAccountParameters,} from "#platforms/playground/PlaygroundAccountParameters";
+import {PlaygroundOrder,} from "#platforms/playground/orders/PlaygroundOrder";
+import {PlaygroundPosition,} from "#platforms/playground/positions/PlaygroundPosition";
 
 export class PlaygroundAccount extends MidaTradingAccount {
     #localDate: MidaDate;
@@ -183,7 +184,7 @@ export class PlaygroundAccount extends MidaTradingAccount {
     }
 
     public override async getOpenPositions (): Promise<MidaPosition[]> {
-        return [];
+        return [ ...this.#positions.values(), ].filter((position: MidaPosition) => position.status === MidaPositionStatus.OPEN);
     }
 
     public async getOpenPositionById (id: string): Promise<MidaPosition | undefined> {
@@ -213,8 +214,8 @@ export class PlaygroundAccount extends MidaTradingAccount {
             symbol = position.symbol;
 
             if (
-                (directives.direction === MidaOrderDirection.BUY && position.direction === MidaPositionDirection.LONG) ||
-                (directives.direction === MidaOrderDirection.SELL && position.direction === MidaPositionDirection.SHORT)
+                directives.direction === MidaOrderDirection.BUY && position.direction === MidaPositionDirection.LONG ||
+                directives.direction === MidaOrderDirection.SELL && position.direction === MidaPositionDirection.SHORT
             ) {
                 purpose = MidaOrderPurpose.OPEN;
             }
@@ -433,6 +434,12 @@ export class PlaygroundAccount extends MidaTradingAccount {
         return this.#localTicks.get(symbol) ?? [];
     }
 
+    public startTimeElapsing (seconds: number = 1): void {
+        setInterval(async (): Promise<void> => {
+            await this.elapseTime(seconds);
+        }, 1000);
+    }
+
     #assertSymbolExists (symbol: string): void {
         if (!this.#symbols.has(symbol)) {
             throw new Error("Symbol not found");
@@ -446,6 +453,7 @@ export class PlaygroundAccount extends MidaTradingAccount {
     }
 
     async #executeOrder (order: MidaOrder): Promise<void> {
+        const executedVolume: number = order.requestedVolume;
         let executionPrice: number | undefined;
 
         switch (order.direction) {
@@ -470,11 +478,13 @@ export class PlaygroundAccount extends MidaTradingAccount {
 
         let position: PlaygroundPosition;
 
+        console.log(order.positionId);
+
         if (!order.positionId) {
             position = new PlaygroundPosition({
                 id: MidaUtilities.uuid(),
                 symbol: order.symbol,
-                volume: order.requestedVolume,
+                volume: 0, // Will be automatically updated after execution
                 direction: order.direction === MidaOrderDirection.BUY ? MidaPositionDirection.LONG : MidaPositionDirection.SHORT,
                 protection: {},
                 tradingAccount: this,
@@ -484,14 +494,29 @@ export class PlaygroundAccount extends MidaTradingAccount {
             this.#positions.set(position.id, position);
         }
         else {
+            console.log("Ehh si...")
             position = this.#getPositionById(order.positionId) as PlaygroundPosition;
         }
 
+        const positionId = position.id;
         const purpose: MidaTradePurpose = order.purpose === MidaOrderPurpose.OPEN ? MidaTradePurpose.OPEN : MidaTradePurpose.CLOSE;
+        let grossProfit: number = 0;
+
+        if (purpose === MidaTradePurpose.CLOSE) {
+            const openOrder: MidaOrder = this.#getOrdersByPositionId(positionId)[0];
+            const openPrice: number = openOrder.executionPrice as number;
+
+            if (position.direction === MidaPositionDirection.LONG) {
+                grossProfit = (executionPrice - openPrice) * executedVolume * 100000;
+            }
+            else {
+                grossProfit = (openPrice - executionPrice) * executedVolume * 100000;
+            }
+        }
 
         const trade: PlaygroundTrade = new PlaygroundTrade({
             id: MidaUtilities.uuid(),
-            orderId: this.id,
+            orderId: order.id,
             symbol: order.symbol,
             volume: order.requestedVolume,
             direction: order.direction === MidaOrderDirection.BUY ? MidaTradeDirection.BUY : MidaTradeDirection.SELL,
@@ -499,7 +524,7 @@ export class PlaygroundAccount extends MidaTradingAccount {
             purpose,
             executionDate: this.#localDate.clone(),
             executionPrice,
-            grossProfit: 0,
+            grossProfit,
             commission: 0,
             swap: 0,
             commissionAsset: this.primaryAsset,
@@ -511,11 +536,23 @@ export class PlaygroundAccount extends MidaTradingAccount {
 
         this.#trades.set(trade.id, trade);
 
-        this.notifyListeners("trade", { trade, });
+        this.#internalEmitter.notifyListeners("trade", { trade, });
     }
 
     #getPositionById (id: string): MidaPosition | undefined {
         return this.#positions.get(id);
+    }
+
+    #getOrdersByPositionId (id: string): MidaOrder[] {
+        const orders: MidaOrder[] = [];
+
+        for (const order of [ ...this.#orders.values(), ]) {
+            if (order.positionId === id) {
+                orders.push(order);
+            }
+        }
+
+        return orders;
     }
 
     async #onTick (tick: MidaTick): Promise<void> {
@@ -548,8 +585,8 @@ export class PlaygroundAccount extends MidaTradingAccount {
             // <limit>
             if (limitPrice !== undefined && Number.isFinite(limitPrice)) {
                 if (
-                    (order.direction === MidaOrderDirection.SELL && tick.bid >= limitPrice)
-                    || (order.direction === MidaOrderDirection.BUY && tick.ask <= limitPrice)
+                    order.direction === MidaOrderDirection.SELL && tick.bid >= limitPrice
+                    || order.direction === MidaOrderDirection.BUY && tick.ask <= limitPrice
                 ) {
                     await this.#executeOrder(order);
                 }
@@ -559,8 +596,8 @@ export class PlaygroundAccount extends MidaTradingAccount {
             // <stop>
             if (stopPrice !== undefined && Number.isFinite(stopPrice)) {
                 if (
-                    (order.direction === MidaOrderDirection.SELL && tick.bid <= stopPrice)
-                    || (order.direction === MidaOrderDirection.BUY && tick.ask >= stopPrice)
+                    order.direction === MidaOrderDirection.SELL && tick.bid <= stopPrice
+                    || order.direction === MidaOrderDirection.BUY && tick.ask >= stopPrice
                 ) {
                     await this.#executeOrder(order);
                 }
@@ -582,8 +619,8 @@ export class PlaygroundAccount extends MidaTradingAccount {
             // <stop-loss>
             if (stopLoss !== undefined && Number.isFinite(stopLoss)) {
                 if (
-                    (position.direction === MidaPositionDirection.SHORT && tick.ask >= stopLoss)
-                    || (position.direction === MidaPositionDirection.LONG && tick.bid <= stopLoss)
+                    position.direction === MidaPositionDirection.SHORT && tick.ask >= stopLoss
+                    || position.direction === MidaPositionDirection.LONG && tick.bid <= stopLoss
                 ) {
                     await position.close();
                 }
@@ -593,8 +630,8 @@ export class PlaygroundAccount extends MidaTradingAccount {
             // <take-profit>
             if (takeProfit !== undefined && Number.isFinite(takeProfit)) {
                 if (
-                    (position.direction === MidaPositionDirection.SHORT && tick.ask <= takeProfit)
-                    || (position.direction === MidaPositionDirection.LONG && tick.bid >= takeProfit)
+                    position.direction === MidaPositionDirection.SHORT && tick.ask <= takeProfit
+                    || position.direction === MidaPositionDirection.LONG && tick.bid >= takeProfit
                 ) {
                     await position.close();
                 }

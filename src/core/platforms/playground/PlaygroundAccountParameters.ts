@@ -1,4 +1,4 @@
-import { MidaTradingPlatform, MidaDate } from "@reiryoku/mida";
+import { MidaTradingPlatform, MidaDate, } from "@reiryoku/mida";
 
 export type PlaygroundAccountParameters = {
     id: string;
